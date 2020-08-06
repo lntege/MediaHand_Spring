@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Menu?>
+<?import javafx.scene.control.MenuBar?>
+<?import javafx.scene.control.MenuItem?>
+<?import javafx.scene.control.SeparatorMenuItem?>
+<?import javafx.scene.layout.BorderPane?>
+<BorderPane prefHeight="600.0" prefWidth="1000.0" xmlns="http://javafx.com/javafx/8.0.172-ea"
+            xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.intege.mediahand.controller.RootLayoutController">
+    <top>
+        <MenuBar BorderPane.alignment="CENTER">
+            <Menu mnemonicParsing="false" text="File">
+                <MenuItem mnemonicParsing="false" onAction="#addMedia" text="Add Media"/>
+                <MenuItem mnemonicParsing="false" onAction="#addDirectory" text="Add Dir"/>
+                <MenuItem mnemonicParsing="false" onAction="#loadNewMediaEntries" text="Reload all"/>
+                <SeparatorMenuItem/>
+                <MenuItem mnemonicParsing="false" text="Remove" onAction="#onRemove"/>
+            </Menu>
+        </MenuBar>
+    </top>
+</BorderPane>
