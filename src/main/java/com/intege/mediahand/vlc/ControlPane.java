@@ -35,7 +35,9 @@ public class ControlPane implements MediaPlayerComponent {
 
     private final EmbeddedMediaPlayer embeddedMediaPlayer;
 
-    private MediaEntryRepository mediaEntryRepository;
+    private final MediaEntryRepository mediaEntryRepository;
+
+    private final JfxMediaHandApplication jfxMediaHandApplication;
 
     private Slider mediaTimeSlider;
 
@@ -46,11 +48,14 @@ public class ControlPane implements MediaPlayerComponent {
     private ControllerIndex currentController;
 
     private boolean isRunning;
+
     private Slider volumeSlider;
 
-    public ControlPane(final EmbeddedMediaPlayer embeddedMediaPlayer, final Scene scene, final MediaEntryRepository mediaEntryRepository) {
+    public ControlPane(final EmbeddedMediaPlayer embeddedMediaPlayer, final JfxMediaHandApplication jfxMediaHandApplication, final Scene scene,
+                       final MediaEntryRepository mediaEntryRepository) {
         this.borderPane = new BorderPane();
         this.embeddedMediaPlayer = embeddedMediaPlayer;
+        this.jfxMediaHandApplication = jfxMediaHandApplication;
         this.mediaEntryRepository = mediaEntryRepository;
 
         initControllerControl();
@@ -96,7 +101,7 @@ public class ControlPane implements MediaPlayerComponent {
                     if (this.currentController.isButtonJustPressed(ControllerButton.BACK)) {
                         Platform.runLater(() -> {
                             stop();
-                            JfxMediaHandApplication.setDefaultScene();
+                            this.jfxMediaHandApplication.setDefaultScene();
                         });
                     }
                     if (this.currentController.isButtonPressed(ControllerButton.DPAD_LEFT)) {
@@ -116,7 +121,7 @@ public class ControlPane implements MediaPlayerComponent {
                         }
                     }
                     if (this.currentController.isButtonJustPressed(ControllerButton.Y)) {
-                        Platform.runLater(() -> JfxMediaHandApplication.getStage().setFullScreen(!JfxMediaHandApplication.getStage().isFullScreen()));
+                        Platform.runLater(() -> this.jfxMediaHandApplication.getStage().setFullScreen(!this.jfxMediaHandApplication.getStage().isFullScreen()));
                     }
                 } catch (ControllerUnpluggedException e) {
                     break;
@@ -136,7 +141,7 @@ public class ControlPane implements MediaPlayerComponent {
         scene.setOnKeyPressed(event -> {
             if (event.getCode() == KeyCode.ESCAPE) {
                 stop();
-                JfxMediaHandApplication.setDefaultScene();
+                this.jfxMediaHandApplication.setDefaultScene();
             } else if (event.getCode() == KeyCode.SPACE) {
                 this.embeddedMediaPlayer.controls().pause();
                 showTimedTimeSlider(ControlPane.TIME_SLIDER_DELAY * 3);
@@ -145,7 +150,7 @@ public class ControlPane implements MediaPlayerComponent {
                 updateMediaTimeSlider(this.embeddedMediaPlayer.status().time());
                 showTimedTimeSlider(ControlPane.TIME_SLIDER_DELAY);
             } else if (!event.isControlDown() && event.getCode() == KeyCode.F) {
-                JfxMediaHandApplication.getStage().setFullScreen(true);
+                this.jfxMediaHandApplication.getStage().setFullScreen(true);
             } else if (event.getCode() == KeyCode.UP) {
                 playNextEpisode();
             } else if (event.getCode() == KeyCode.DOWN) {
@@ -177,21 +182,21 @@ public class ControlPane implements MediaPlayerComponent {
     }
 
     private void playSelectedMedia(boolean fullScreen) {
-        JfxMediaHandApplication.getMediaHandAppController().playEmbeddedMedia();
-        JfxMediaHandApplication.getStage().setFullScreen(fullScreen);
+        this.jfxMediaHandApplication.getMediaHandAppController().playEmbeddedMedia();
+        this.jfxMediaHandApplication.getStage().setFullScreen(fullScreen);
     }
 
     private void playNextEpisode() {
         stop();
-        boolean fullScreen = JfxMediaHandApplication.getStage().isFullScreen();
-        JfxMediaHandApplication.getMediaHandAppController().increaseCurrentEpisode();
+        boolean fullScreen = this.jfxMediaHandApplication.getStage().isFullScreen();
+        this.jfxMediaHandApplication.getMediaHandAppController().increaseCurrentEpisode();
         playSelectedMedia(fullScreen);
     }
 
     private void playPreviousEpisode() {
         stop();
-        boolean fullScreen = JfxMediaHandApplication.getStage().isFullScreen();
-        JfxMediaHandApplication.getMediaHandAppController().decreaseCurrentEpisode();
+        boolean fullScreen = this.jfxMediaHandApplication.getStage().isFullScreen();
+        this.jfxMediaHandApplication.getMediaHandAppController().decreaseCurrentEpisode();
         playSelectedMedia(fullScreen);
     }
 

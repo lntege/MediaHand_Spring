@@ -9,6 +9,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import com.intege.mediahand.MediaLoader;
@@ -110,6 +111,10 @@ public class MediaHandAppController {
     @Autowired
     private MediaEntryRepository mediaEntryRepository;
 
+    @Lazy
+    @Autowired
+    private JfxMediaHandApplication jfxMediaHandApplication;
+
     public void init() {
         initMediaPlayer();
 
@@ -187,13 +192,13 @@ public class MediaHandAppController {
 
     public void onMediaFinished() {
         this.controlPane.stop();
-        boolean fullScreen = JfxMediaHandApplication.getStage().isFullScreen();
+        boolean fullScreen = this.jfxMediaHandApplication.getStage().isFullScreen();
         increaseCurrentEpisode();
         if (this.autoContinueCheckbox.isSelected()) {
             playEmbeddedMedia();
-            JfxMediaHandApplication.getStage().setFullScreen(fullScreen);
+            this.jfxMediaHandApplication.getStage().setFullScreen(fullScreen);
         } else {
-            JfxMediaHandApplication.setDefaultScene();
+            this.jfxMediaHandApplication.setDefaultScene();
         }
     }
 
@@ -309,8 +314,8 @@ public class MediaHandAppController {
                 String windowTitle = selectedItem.getTitle() + " : Episode " + selectedItem.getCurrentEpisode();
                 this.isRunning = false;
 
-                JfxMediaHandApplication.getStage().setTitle(windowTitle);
-                JfxMediaHandApplication.getStage().setScene(this.javaFxMediaPlayer.getScene());
+                this.jfxMediaHandApplication.getStage().setTitle(windowTitle);
+                this.jfxMediaHandApplication.getStage().setScene(this.javaFxMediaPlayer.getScene());
 
                 if (this.javaFxMediaPlayer.start(file)) {
                     this.controlPane.update(selectedItem);
@@ -336,11 +341,11 @@ public class MediaHandAppController {
 
         StackPane stackPane = this.javaFxMediaPlayer.getStackPane();
         this.mediaPlayerContextMenu = new MediaPlayerContextMenu(this.javaFxMediaPlayer.getEmbeddedMediaPlayer(), stackPane);
-        this.controlPane = new ControlPane(this.javaFxMediaPlayer.getEmbeddedMediaPlayer(), this.javaFxMediaPlayer.getScene(), this.mediaEntryRepository);
+        this.controlPane = new ControlPane(this.javaFxMediaPlayer.getEmbeddedMediaPlayer(), this.jfxMediaHandApplication, this.javaFxMediaPlayer.getScene(), this.mediaEntryRepository);
         stackPane.getChildren().add(this.controlPane.getBorderPane());
 
-        JfxMediaHandApplication.getStage().setOnCloseRequest(new StopRenderingSceneHandler(List.of(this.controlPane, this.javaFxMediaPlayer)));
-        JfxMediaHandApplication.getStage().setFullScreenExitKeyCombination(new KeyCodeCombination(KeyCode.F, KeyCombination.CONTROL_DOWN));
+        this.jfxMediaHandApplication.getStage().setOnCloseRequest(new StopRenderingSceneHandler(List.of(this.controlPane, this.javaFxMediaPlayer)));
+        this.jfxMediaHandApplication.getStage().setFullScreenExitKeyCombination(new KeyCodeCombination(KeyCode.F, KeyCombination.CONTROL_DOWN));
     }
 
     private void playMedia() {
@@ -367,7 +372,7 @@ public class MediaHandAppController {
     }
 
     private void changeMediaLocation() {
-        Optional<File> directory = JfxMediaHandApplication.chooseMediaDirectory();
+        Optional<File> directory = this.jfxMediaHandApplication.chooseMediaDirectory();
         if (directory.isPresent()) {
             MediaEntry updatedMediaEntry = this.mediaLoader.createTempMediaEntry(directory.get().toPath());
             updateMedia(updatedMediaEntry);

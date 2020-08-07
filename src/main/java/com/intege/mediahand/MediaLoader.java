@@ -13,6 +13,7 @@ import java.util.Optional;
 import javax.transaction.Transactional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import com.intege.mediahand.controller.MediaHandAppController;
@@ -43,6 +44,10 @@ public class MediaLoader {
 
     @Autowired
     private MediaEntryRepository mediaEntryRepository;
+
+    @Lazy
+    @Autowired
+    private JfxMediaHandApplication jfxMediaHandApplication;
 
     /**
      * Adds all media of every directory path in dirTable into the mediaTable.
@@ -96,7 +101,7 @@ public class MediaLoader {
     @Transactional
     public void addSingleMedia() {
         DirectoryEntry basePath = this.directoryEntryRepository.findAll().get(0);
-        Optional<File> optionalDir = JfxMediaHandApplication.chooseMediaDirectory(Path.of(basePath.getPath()));
+        Optional<File> optionalDir = this.jfxMediaHandApplication.chooseMediaDirectory(Path.of(basePath.getPath()));
         if (optionalDir.isPresent()) {
             File dir = optionalDir.get();
             MediaEntry tempMediaEntry = createTempMediaEntry(dir.toPath(), null);
