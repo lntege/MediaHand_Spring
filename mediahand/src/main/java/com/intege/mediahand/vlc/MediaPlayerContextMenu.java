@@ -2,7 +2,7 @@ package com.intege.mediahand.vlc;
 
 import java.util.Optional;
 
-import com.intege.mediahand.domain.old.MediaEntry;
+import com.intege.mediahand.domain.MediaEntry;
 
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Menu;

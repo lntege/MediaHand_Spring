@@ -1,13 +1,13 @@
 package com.intege.mediahand.core;
 
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Optional;
 
 import javax.transaction.Transactional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.ConfigurableApplicationContext;
 
@@ -15,11 +15,10 @@ import com.intege.mediahand.MediaLoader;
 import com.intege.mediahand.WatchState;
 import com.intege.mediahand.controller.MediaHandAppController;
 import com.intege.mediahand.controller.RootLayoutController;
+import com.intege.mediahand.domain.DirectoryEntry;
 import com.intege.mediahand.domain.SettingsEntry;
-import com.intege.mediahand.domain.old.DirectoryEntry;
+import com.intege.mediahand.domain.repository.DirectoryEntryRepository;
 import com.intege.mediahand.domain.repository.SettingsEntryRepository;
-import com.intege.mediahand.repository.RepositoryFactory;
-import com.intege.mediahand.repository.base.Database;
 
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -38,31 +37,33 @@ public class JfxMediaHandApplication extends Application {
     private ConfigurableApplicationContext applicationContext;
 
     private static Stage stage;
-    private static MediaLoader mediaLoader;
     private static MediaHandAppController mediaHandAppController;
     private static Scene scene;
 
     private BorderPane rootLayout;
     private SettingsEntry settingsEntry;
 
-    private final SettingsEntryRepository settingsEntryRepository;
+    @Autowired
+    private DirectoryEntryRepository directoryEntryRepository;
 
     @Autowired
-    public JfxMediaHandApplication(final SettingsEntryRepository settingsEntryRepository) {
-        this.settingsEntryRepository = settingsEntryRepository;
-    }
+    private SettingsEntryRepository settingsEntryRepository;
+
+    @Autowired
+    private MediaLoader mediaLoader;
 
     @Override
     public void init() {
         String[] args = getParameters().getRaw().toArray(new String[0]);
 
         this.applicationContext = new SpringApplicationBuilder().sources(MediaHandApplication.class).run(args);
+        this.applicationContext.getAutowireCapableBeanFactory().autowireBeanProperties(this, AutowireCapableBeanFactory.AUTOWIRE_BY_TYPE, true);
     }
 
     @Override
-    public void start(Stage stage) throws IOException {
+    public void start(Stage stage) {
         JfxMediaHandApplication.stage = stage;
-        JfxMediaHandApplication.mediaLoader = new MediaLoader();
+        this.mediaLoader = new MediaLoader();
 
         validateBasePath();
 
@@ -84,20 +85,18 @@ public class JfxMediaHandApplication extends Application {
         this.settingsEntry.setAutoContinue(JfxMediaHandApplication.mediaHandAppController.autoContinueCheckbox.isSelected());
         this.settingsEntry.setShowAll(JfxMediaHandApplication.mediaHandAppController.showAllCheckbox.isSelected());
         this.settingsEntry.setWatchState(WatchState.lookupByName(JfxMediaHandApplication.mediaHandAppController.watchStateFilter.getSelectionModel().getSelectedItem()));
-        //        RepositoryFactory.getSettingsRepository().update(this.settingsEntry);
 
         this.applicationContext.close();
         Platform.exit();
     }
 
-    private void initRootLayout() throws IOException {
+    private void initRootLayout() {
         FxWeaver fxWeaver = this.applicationContext.getBean(FxWeaver.class);
         this.rootLayout = fxWeaver.loadView(RootLayoutController.class);
 
         JfxMediaHandApplication.scene = new Scene(this.rootLayout);
         JfxMediaHandApplication.setDefaultScene();
 
-        //        this.settingsEntry = RepositoryFactory.getSettingsRepository().create(new SettingsEntry("default", 1200, 800, false, false, null));
         this.settingsEntry = this.settingsEntryRepository.findByProfile("default");
         if (this.settingsEntry == null) {
             this.settingsEntry = this.settingsEntryRepository.save(new com.intege.mediahand.domain.SettingsEntry("default", 1200, 800, false, false, null));
@@ -106,13 +105,11 @@ public class JfxMediaHandApplication extends Application {
         JfxMediaHandApplication.stage.setHeight(this.settingsEntry.getWindowHeight());
 
         JfxMediaHandApplication.stage.show();
-
-        Runtime.getRuntime().addShutdownHook(new Thread(Database.getInstance()::closeConnections));
     }
 
     private void validateBasePath() {
-        if (RepositoryFactory.getBasePathRepository().findAll().size() == 0) {
-            JfxMediaHandApplication.addBasePath();
+        if (this.directoryEntryRepository.findAll().size() == 0) {
+            addBasePath();
         }
     }
 
@@ -140,11 +137,11 @@ public class JfxMediaHandApplication extends Application {
         }
     }
 
-    public static boolean addBasePath() {
+    public boolean addBasePath() {
         Optional<File> baseDir = JfxMediaHandApplication.chooseMediaDirectory();
 
         if (baseDir.isPresent()) {
-            JfxMediaHandApplication.mediaLoader.addMedia(RepositoryFactory.getBasePathRepository().create(new DirectoryEntry(baseDir.get().getAbsolutePath())));
+            this.mediaLoader.addMedia(this.directoryEntryRepository.save(new DirectoryEntry(baseDir.get().getAbsolutePath())));
             return true;
         }
         return false;
@@ -176,10 +173,6 @@ public class JfxMediaHandApplication extends Application {
 
     public static MediaHandAppController getMediaHandAppController() {
         return JfxMediaHandApplication.mediaHandAppController;
-    }
-
-    public static MediaLoader getMediaLoader() {
-        return JfxMediaHandApplication.mediaLoader;
     }
 
     public static Stage getStage() {

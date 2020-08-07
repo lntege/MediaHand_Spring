@@ -17,6 +17,9 @@ public class DirectoryEntry {
     @Column(unique = true)
     private String path;
 
+    DirectoryEntry() {
+    }
+
     public DirectoryEntry(String path) {
         this.path = path;
     }

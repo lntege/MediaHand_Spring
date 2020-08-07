@@ -36,6 +36,7 @@ public class SchemaGenerator {
         }
         Map<String, String> settings = new HashMap<>();
         settings.put(Environment.URL, "jdbc:hsqldb:mem:schema");
+        settings.put(Environment.PHYSICAL_NAMING_STRATEGY, "org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl");
         StandardServiceRegistry serviceRegistry = new StandardServiceRegistryBuilder().applySettings(settings).build();
 
         MetadataSources metadataSources = new MetadataSources(serviceRegistry);

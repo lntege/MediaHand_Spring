@@ -1,10 +1,12 @@
 package com.intege.mediahand.domain.repository;
 
-import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
 import com.intege.mediahand.domain.DirectoryEntry;
 
-public interface DirectoryEntryRepository extends CrudRepository<DirectoryEntry, Integer> {
+@Repository
+public interface DirectoryEntryRepository extends JpaRepository<DirectoryEntry, Integer> {
 
     DirectoryEntry findByPath(String path);
 

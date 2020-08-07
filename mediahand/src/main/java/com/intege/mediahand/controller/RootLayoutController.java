@@ -1,10 +1,13 @@
 package com.intege.mediahand.controller;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
+import com.intege.mediahand.MediaLoader;
 import com.intege.mediahand.core.JfxMediaHandApplication;
-import com.intege.mediahand.domain.old.MediaEntry;
-import com.intege.mediahand.repository.RepositoryFactory;
+import com.intege.mediahand.domain.MediaEntry;
+import com.intege.mediahand.domain.repository.MediaEntryRepository;
 
 import net.rgielen.fxweaver.core.FxmlView;
 
@@ -12,27 +15,40 @@ import net.rgielen.fxweaver.core.FxmlView;
 @FxmlView("rootLayout.fxml")
 public class RootLayoutController {
 
+    @Lazy
+    @Autowired
+    private JfxMediaHandApplication jfxMediaHandApplication;
+
+    @Autowired
+    private MediaLoader mediaLoader;
+
+    @Autowired
+    private MediaEntryRepository mediaEntryRepository;
+
+    @Autowired
+    private MediaHandAppController mediaHandAppController;
+
     public void addDirectory() {
-        if (JfxMediaHandApplication.addBasePath()) {
-            JfxMediaHandApplication.getMediaHandAppController().fillTableView(RepositoryFactory.getMediaRepository().findAll());
+        if (this.jfxMediaHandApplication.addBasePath()) {
+            this.mediaHandAppController.fillTableView(this.mediaEntryRepository.findAll());
         }
     }
 
     public void loadNewMediaEntries() {
-        JfxMediaHandApplication.getMediaLoader().addAllMedia();
-        JfxMediaHandApplication.getMediaHandAppController().fillTableView(RepositoryFactory.getMediaRepository().findAll());
+        this.mediaLoader.addAllMedia();
+        this.mediaHandAppController.fillTableView(this.mediaEntryRepository.findAll());
     }
 
     public void onRemove() {
-        MediaEntry selectedMediaEntry = JfxMediaHandApplication.getMediaHandAppController().getSelectedMediaEntry();
+        MediaEntry selectedMediaEntry = this.mediaHandAppController.getSelectedMediaEntry();
         if (selectedMediaEntry != null) {
-            RepositoryFactory.getMediaRepository().remove(selectedMediaEntry);
+            this.mediaEntryRepository.delete(selectedMediaEntry);
         }
     }
 
     public void addMedia() {
-        JfxMediaHandApplication.getMediaLoader().addSingleMedia();
-        JfxMediaHandApplication.getMediaHandAppController().fillTableView(RepositoryFactory.getMediaRepository().findAll());
+        this.mediaLoader.addSingleMedia();
+        this.mediaHandAppController.fillTableView(this.mediaEntryRepository.findAll());
     }
 
 }

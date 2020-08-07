@@ -10,12 +10,14 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.intege.mediahand.MediaLoader;
 import com.intege.mediahand.WatchState;
 import com.intege.mediahand.core.JfxMediaHandApplication;
-import com.intege.mediahand.domain.old.MediaEntry;
-import com.intege.mediahand.repository.RepositoryFactory;
+import com.intege.mediahand.domain.MediaEntry;
+import com.intege.mediahand.domain.repository.MediaEntryRepository;
 import com.intege.mediahand.utils.MessageUtil;
 import com.intege.mediahand.vlc.ControlPane;
 import com.intege.mediahand.vlc.JavaFxMediaPlayer;
@@ -31,6 +33,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.collections.transformation.SortedList;
+import javafx.fxml.FXML;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.DatePicker;
@@ -55,23 +58,44 @@ public class MediaHandAppController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MediaHandAppController.class);
 
+    @FXML
     public TableView<MediaEntry> mediaTableView;
 
     private static ObservableList<MediaEntry> mediaEntries;
+
     private static FilteredList<MediaEntry> filteredData;
 
+    @FXML
     public TextField titleFilter;
+
+    @FXML
     public ComboBox<String> watchStateFilter;
+
+    @FXML
     public ComboBox<String> typeFilter;
+
+    @FXML
     public CheckBox showAllCheckbox;
+
+    @FXML
     public CheckBox autoContinueCheckbox;
 
+    @FXML
     public ComboBox<String> watchStateEdit;
+
+    @FXML
     public ComboBox<Integer> ratingEdit;
+
+    @FXML
     public DatePicker watchedEdit;
+
+    @FXML
     public ComboBox<Integer> episodeEdit;
+
+    @FXML
     public Label selectedMediaTitle;
 
+    @FXML
     public TableColumn<MediaEntry, String> title;
 
     private ControllerIndex currentController;
@@ -81,6 +105,12 @@ public class MediaHandAppController {
     private JavaFxMediaPlayer javaFxMediaPlayer;
     private ControlPane controlPane;
     private MediaPlayerContextMenu mediaPlayerContextMenu;
+
+    @Autowired
+    private MediaLoader mediaLoader;
+
+    @Autowired
+    private MediaEntryRepository mediaEntryRepository;
 
     public void init() {
         initMediaPlayer();
@@ -95,7 +125,7 @@ public class MediaHandAppController {
                 super.updateItem(item, empty);
                 setText(item);
                 if (item != null) {
-                    setTooltip(new Tooltip(RepositoryFactory.getMediaRepository().find(new MediaEntry(item)).getAbsolutePath()));
+                    setTooltip(new Tooltip(MediaHandAppController.this.mediaEntryRepository.findByTitle(item).getAbsolutePath()));
                 }
             }
         });
@@ -126,31 +156,35 @@ public class MediaHandAppController {
             MediaEntry selectedItem = this.mediaTableView.getSelectionModel().getSelectedItem();
             if (selectedItem != null && newValue != null && selectedItem.getRating() != newValue) {
                 selectedItem.setRating(newValue);
-                RepositoryFactory.getMediaRepository().update(selectedItem);
+                this.mediaEntryRepository.save(selectedItem);
+                MediaHandAppController.triggerMediaEntryUpdate(selectedItem);
             }
         });
         this.episodeEdit.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             MediaEntry selectedItem = this.mediaTableView.getSelectionModel().getSelectedItem();
             if (selectedItem != null && newValue != null && selectedItem.getCurrentEpisodeNumber() != newValue) {
                 selectedItem.setCurrentEpisodeNumber(newValue);
-                RepositoryFactory.getMediaRepository().update(selectedItem);
+                this.mediaEntryRepository.save(selectedItem);
+                MediaHandAppController.triggerMediaEntryUpdate(selectedItem);
             }
         });
         this.watchStateEdit.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             MediaEntry selectedItem = this.mediaTableView.getSelectionModel().getSelectedItem();
             if (selectedItem != null && !Objects.equals(selectedItem.getWatchState().toString(), newValue)) {
                 selectedItem.setWatchState(WatchState.lookupByName(newValue));
-                RepositoryFactory.getMediaRepository().update(selectedItem);
+                this.mediaEntryRepository.save(selectedItem);
+                MediaHandAppController.triggerMediaEntryUpdate(selectedItem);
             }
         });
         this.watchedEdit.valueProperty().addListener((observable, oldValue, newValue) -> {
             MediaEntry selectedItem = this.mediaTableView.getSelectionModel().getSelectedItem();
             if (selectedItem != null && !Objects.equals(selectedItem.getWatchedDate(), newValue)) {
                 selectedItem.setWatchedDate(newValue);
-                RepositoryFactory.getMediaRepository().update(selectedItem);
+                this.mediaEntryRepository.save(selectedItem);
+                MediaHandAppController.triggerMediaEntryUpdate(selectedItem);
             }
         });
-        fillTableView(RepositoryFactory.getMediaRepository().findAll());
+        fillTableView(this.mediaEntryRepository.findAll());
     }
 
     public void onMediaFinished() {
@@ -229,12 +263,12 @@ public class MediaHandAppController {
     }
 
     private void addWatchStateFilter() {
-        this.watchStateFilter.setItems(FXCollections.observableArrayList("ALL", WatchState.WANT_TO_WATCH.toString(), WatchState.DOWNLOADING.toString(), WatchState.WATCHED.toString(), WatchState.WATCHING.toString(), WatchState.REWATCHING.toString()));
+        this.watchStateFilter.setItems(FXCollections.observableArrayList(WatchState.ALL.toString(), WatchState.WANT_TO_WATCH.toString(), WatchState.DOWNLOADING.toString(), WatchState.WATCHED.toString(), WatchState.WATCHING.toString(), WatchState.REWATCHING.toString()));
         this.watchStateFilter.getSelectionModel().select("ALL");
     }
 
     private void addMediaTypeFilter() {
-        List<String> mediaTypes = new ArrayList<>(RepositoryFactory.getMediaRepository().findAllMediaTypes());
+        List<String> mediaTypes = new ArrayList<>(this.mediaEntryRepository.findAllMediaTypes());
         mediaTypes.add(0, "All");
         this.typeFilter.setItems(FXCollections.observableArrayList(mediaTypes));
         this.typeFilter.getSelectionModel().select("All");
@@ -274,7 +308,7 @@ public class MediaHandAppController {
                     + selectedItem.getAbsolutePath(), "Selected media is not available. Deselect 'Show All' to show only media of connected media directories.");
         } else {
             try {
-                File file = JfxMediaHandApplication.getMediaLoader().getEpisode(selectedItem.getAbsolutePath(), selectedItem.getCurrentEpisodeNumber());
+                File file = this.mediaLoader.getEpisode(selectedItem.getAbsolutePath(), selectedItem.getCurrentEpisodeNumber());
 
                 String windowTitle = selectedItem.getTitle() + " : Episode " + selectedItem.getCurrentEpisodeNumber();
                 this.isRunning = false;
@@ -306,7 +340,7 @@ public class MediaHandAppController {
 
         StackPane stackPane = this.javaFxMediaPlayer.getStackPane();
         this.mediaPlayerContextMenu = new MediaPlayerContextMenu(this.javaFxMediaPlayer.getEmbeddedMediaPlayer(), stackPane);
-        this.controlPane = new ControlPane(this.javaFxMediaPlayer.getEmbeddedMediaPlayer(), this.javaFxMediaPlayer.getScene());
+        this.controlPane = new ControlPane(this.javaFxMediaPlayer.getEmbeddedMediaPlayer(), this.javaFxMediaPlayer.getScene(), this.mediaEntryRepository);
         stackPane.getChildren().add(this.controlPane.getBorderPane());
 
         JfxMediaHandApplication.getStage().setOnCloseRequest(new StopRenderingSceneHandler(List.of(this.controlPane, this.javaFxMediaPlayer)));
@@ -323,7 +357,7 @@ public class MediaHandAppController {
         } else {
             Desktop desktop = Desktop.getDesktop();
             try {
-                File file = JfxMediaHandApplication.getMediaLoader().getEpisode(selectedItem.getAbsolutePath(), selectedItem.getCurrentEpisodeNumber());
+                File file = this.mediaLoader.getEpisode(selectedItem.getAbsolutePath(), selectedItem.getCurrentEpisodeNumber());
                 try {
                     desktop.open(file);
                 } catch (IOException e) {
@@ -339,7 +373,7 @@ public class MediaHandAppController {
     private void changeMediaLocation() {
         Optional<File> directory = JfxMediaHandApplication.chooseMediaDirectory();
         if (directory.isPresent()) {
-            MediaEntry updatedMediaEntry = JfxMediaHandApplication.getMediaLoader().createTempMediaEntry(directory.get().toPath());
+            MediaEntry updatedMediaEntry = this.mediaLoader.createTempMediaEntry(directory.get().toPath());
             updateMedia(updatedMediaEntry);
         }
     }
@@ -347,7 +381,7 @@ public class MediaHandAppController {
     private void updateMedia(final MediaEntry mediaEntry) {
         MediaEntry selectedItem = this.mediaTableView.getSelectionModel().getSelectedItem();
         if (selectedItem != null) {
-            JfxMediaHandApplication.getMediaLoader().updateMediaEntry(mediaEntry, RepositoryFactory.getMediaRepository(), selectedItem);
+            this.mediaLoader.updateMediaEntry(mediaEntry, selectedItem);
         }
     }
 
@@ -355,7 +389,8 @@ public class MediaHandAppController {
         MediaEntry selectedItem = this.mediaTableView.getSelectionModel().getSelectedItem();
         if (selectedItem != null && selectedItem.getCurrentEpisodeNumber() < selectedItem.getEpisodeNumber()) {
             selectedItem.setCurrentEpisodeNumber(selectedItem.getCurrentEpisodeNumber() + 1);
-            RepositoryFactory.getMediaRepository().update(selectedItem);
+            this.mediaEntryRepository.save(selectedItem);
+            MediaHandAppController.triggerMediaEntryUpdate(selectedItem);
         }
     }
 
@@ -363,7 +398,8 @@ public class MediaHandAppController {
         MediaEntry selectedItem = this.mediaTableView.getSelectionModel().getSelectedItem();
         if (selectedItem != null && selectedItem.getCurrentEpisodeNumber() > 1) {
             selectedItem.setCurrentEpisodeNumber(selectedItem.getCurrentEpisodeNumber() - 1);
-            RepositoryFactory.getMediaRepository().update(selectedItem);
+            this.mediaEntryRepository.save(selectedItem);
+            MediaHandAppController.triggerMediaEntryUpdate(selectedItem);
         }
     }
 
@@ -405,7 +441,8 @@ public class MediaHandAppController {
         MediaEntry selectedItem = this.mediaTableView.getSelectionModel().getSelectedItem();
         if (selectedItem != null && selectedItem.getWatchedCount() > 0) {
             selectedItem.setWatchedCount(selectedItem.getWatchedCount() - 1);
-            RepositoryFactory.getMediaRepository().update(selectedItem);
+            this.mediaEntryRepository.save(selectedItem);
+            MediaHandAppController.triggerMediaEntryUpdate(selectedItem);
         }
     }
 
@@ -413,7 +450,8 @@ public class MediaHandAppController {
         MediaEntry selectedItem = this.mediaTableView.getSelectionModel().getSelectedItem();
         if (selectedItem != null) {
             selectedItem.setWatchedCount(selectedItem.getWatchedCount() + 1);
-            RepositoryFactory.getMediaRepository().update(selectedItem);
+            this.mediaEntryRepository.save(selectedItem);
+            MediaHandAppController.triggerMediaEntryUpdate(selectedItem);
         }
     }
 }

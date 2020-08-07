@@ -7,8 +7,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.intege.mediahand.core.JfxMediaHandApplication;
-import com.intege.mediahand.domain.old.MediaEntry;
-import com.intege.mediahand.repository.RepositoryFactory;
+import com.intege.mediahand.domain.MediaEntry;
+import com.intege.mediahand.domain.repository.MediaEntryRepository;
 import com.intege.mediahand.utils.MessageUtil;
 import com.studiohartman.jamepad.ControllerButton;
 import com.studiohartman.jamepad.ControllerIndex;
@@ -38,6 +38,8 @@ public class ControlPane implements MediaPlayerComponent {
 
     private final EmbeddedMediaPlayer embeddedMediaPlayer;
 
+    private MediaEntryRepository mediaEntryRepository;
+
     private Slider mediaTimeSlider;
 
     private MediaEntry mediaEntry;
@@ -49,9 +51,10 @@ public class ControlPane implements MediaPlayerComponent {
     private boolean isRunning;
     private Slider volumeSlider;
 
-    public ControlPane(final EmbeddedMediaPlayer embeddedMediaPlayer, final Scene scene) {
+    public ControlPane(final EmbeddedMediaPlayer embeddedMediaPlayer, final Scene scene, final MediaEntryRepository mediaEntryRepository) {
         this.borderPane = new BorderPane();
         this.embeddedMediaPlayer = embeddedMediaPlayer;
+        this.mediaEntryRepository = mediaEntryRepository;
 
         initControllerControl();
         addTimeListener();
@@ -174,9 +177,6 @@ public class ControlPane implements MediaPlayerComponent {
             this.embeddedMediaPlayer.controls().stop();
         }
         this.timer.cancel();
-        if (this.mediaEntry != null) {
-            RepositoryFactory.getMediaRepository().update(this.mediaEntry);
-        }
     }
 
     private void playSelectedMedia(boolean fullScreen) {
@@ -267,10 +267,12 @@ public class ControlPane implements MediaPlayerComponent {
             int newVolume = (int) volumeSlider.getValue();
             this.embeddedMediaPlayer.audio().setVolume(newVolume);
             this.mediaEntry.setVolume(newVolume);
+            this.mediaEntryRepository.save(this.mediaEntry);
         });
         volumeSlider.valueProperty().addListener((observable, oldValue, newValue) -> {
             this.embeddedMediaPlayer.audio().setVolume(newValue.intValue());
             this.mediaEntry.setVolume(newValue.intValue());
+            this.mediaEntryRepository.save(this.mediaEntry);
         });
         return volumeSlider;
     }

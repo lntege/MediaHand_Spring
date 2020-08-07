@@ -5,19 +5,24 @@ import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
+import javax.transaction.Transactional;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import com.intege.mediahand.controller.MediaHandAppController;
 import com.intege.mediahand.core.JfxMediaHandApplication;
-import com.intege.mediahand.domain.old.DirectoryEntry;
-import com.intege.mediahand.domain.old.MediaEntry;
-import com.intege.mediahand.repository.RepositoryFactory;
-import com.intege.mediahand.repository.base.BaseRepository;
+import com.intege.mediahand.domain.DirectoryEntry;
+import com.intege.mediahand.domain.MediaEntry;
+import com.intege.mediahand.domain.repository.DirectoryEntryRepository;
+import com.intege.mediahand.domain.repository.MediaEntryRepository;
 import com.intege.utils.Check;
 
 import javafx.collections.ObservableList;
@@ -28,17 +33,24 @@ import javafx.collections.transformation.FilteredList;
  *
  * @author Lueko
  */
+@Service
 public class MediaLoader {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MediaLoader.class);
 
     private DirectoryEntry basePath;
 
+    @Autowired
+    private DirectoryEntryRepository directoryEntryRepository;
+
+    @Autowired
+    private MediaEntryRepository mediaEntryRepository;
+
     /**
      * Adds all media of every directory path in dirTable into the mediaTable.
      */
     public void addAllMedia() {
-        List<DirectoryEntry> basePaths = RepositoryFactory.getBasePathRepository().findAll();
+        List<DirectoryEntry> basePaths = this.directoryEntryRepository.findAll();
 
         for (DirectoryEntry path : basePaths) {
             addMedia(path);
@@ -46,6 +58,7 @@ public class MediaLoader {
 
     }
 
+    @Transactional
     public void addMedia(final DirectoryEntry basePath) {
         Check.notNullArgument(basePath, "basePath");
 
@@ -82,8 +95,9 @@ public class MediaLoader {
         }
     }
 
+    @Transactional
     public void addSingleMedia() {
-        DirectoryEntry basePath = RepositoryFactory.getBasePathRepository().findAll().get(0);
+        DirectoryEntry basePath = this.directoryEntryRepository.findAll().get(0);
         Optional<File> optionalDir = JfxMediaHandApplication.chooseMediaDirectory(Path.of(basePath.getPath()));
         if (optionalDir.isPresent()) {
             File dir = optionalDir.get();
@@ -100,7 +114,6 @@ public class MediaLoader {
      * @param newMediaEntry the {@link MediaEntry} to add
      */
     private void addSingleMedia(final MediaEntry newMediaEntry) {
-        BaseRepository<MediaEntry> mediaRepository = RepositoryFactory.getMediaRepository();
         ObservableList<MediaEntry> mediaEntries = MediaHandAppController.getMediaEntries();
         FilteredList<MediaEntry> mediaEntryFilteredList = null;
         if (mediaEntries != null) {
@@ -108,7 +121,7 @@ public class MediaLoader {
                     .filtered(m -> m.getTitle().equals(newMediaEntry.getTitle()));
         }
         if (mediaEntryFilteredList == null || mediaEntryFilteredList.isEmpty()) {
-            mediaRepository.create(newMediaEntry);
+            this.mediaEntryRepository.save(newMediaEntry);
         } else {
             MediaEntry mediaEntry = mediaEntryFilteredList.get(0);
             if (!mediaEntry.isAvailable()) {
@@ -117,26 +130,25 @@ public class MediaLoader {
                 mediaEntry.setMediaType(newMediaEntry.getMediaType());
                 mediaEntry.setEpisodeNumber(newMediaEntry.getEpisodeNumber());
                 mediaEntry.setAvailable(true);
-                updateMediaEntry(mediaEntry, mediaRepository);
             } else {
-                updateMediaEntryEpisodes(newMediaEntry, mediaRepository, mediaEntry);
+                updateMediaEntryEpisodes(newMediaEntry, mediaEntry);
             }
+            MediaHandAppController.triggerMediaEntryUpdate(mediaEntry);
         }
     }
 
     public MediaEntry createTempMediaEntry(final Path mediaDirectory) {
-        List<DirectoryEntry> allBasePaths = RepositoryFactory.getBasePathRepository().findAll();
+        List<DirectoryEntry> allBasePaths = this.directoryEntryRepository.findAll();
         String basePath = mediaDirectory.getParent().getParent().toString();
         Optional<DirectoryEntry> optionalBasePath = allBasePaths.stream().filter(directoryEntry -> directoryEntry.getPath().equals(basePath)).findFirst();
         if (optionalBasePath.isEmpty()) {
-            optionalBasePath = Optional.of(RepositoryFactory.getBasePathRepository().create(new DirectoryEntry(basePath)));
+            optionalBasePath = Optional.of(this.directoryEntryRepository.save(new DirectoryEntry(basePath)));
         }
         String mediaTitle = mediaDirectory.getFileName().toString();
         int episodeNumber = getMediaCount(mediaDirectory.toFile());
         String mediaType = mediaDirectory.getParent().getFileName().toString();
         String relativePath = mediaDirectory.toString().substring(optionalBasePath.get().getPath().length());
-        return new MediaEntry(0, mediaTitle, episodeNumber, mediaType,
-                WatchState.WANT_TO_WATCH, 0, relativePath, 0, null, 0, null, 0, optionalBasePath.get(), 50, null, null);
+        return new MediaEntry(mediaTitle, episodeNumber, mediaType, WatchState.WANT_TO_WATCH, 0, relativePath, 0, null, 0, null, 0, optionalBasePath.get(), 50, null, null);
     }
 
     private MediaEntry createTempMediaEntry(final Path mediaDirectory, final DirectoryEntry basePath) {
@@ -147,23 +159,18 @@ public class MediaLoader {
         if (basePath != null) {
             relativePath = relativePath.substring(basePath.getPath().length());
         }
-        return new MediaEntry(0, mediaTitle, episodeNumber, mediaType,
-                WatchState.WANT_TO_WATCH, 0, relativePath, 0, null, 0, null, 0, basePath, 50, null, null);
+        return new MediaEntry(mediaTitle, episodeNumber, mediaType, WatchState.WANT_TO_WATCH, 0, relativePath, 1, LocalDate.now(), 0, null, 0, basePath, 50, null, null);
     }
 
-    private void updateMediaEntryEpisodes(final MediaEntry newMediaEntry, final BaseRepository<MediaEntry> mediaRepository, final MediaEntry mediaEntry) {
+    private void updateMediaEntryEpisodes(final MediaEntry newMediaEntry, final MediaEntry mediaEntry) {
         mediaEntry.setEpisodeNumber(newMediaEntry.getEpisodeNumber());
         if (mediaEntry.getCurrentEpisodeNumber() > mediaEntry.getEpisodeNumber()) {
             mediaEntry.setCurrentEpisodeNumber(mediaEntry.getEpisodeNumber());
         }
-        mediaRepository.update(mediaEntry);
     }
 
-    private void updateMediaEntry(final MediaEntry mediaEntry, final BaseRepository<MediaEntry> mediaRepository) {
-        mediaRepository.update(mediaEntry);
-    }
-
-    public void updateMediaEntry(final MediaEntry newMediaEntry, final BaseRepository<MediaEntry> mediaRepository, final MediaEntry mediaEntry) {
+    @Transactional
+    public void updateMediaEntry(final MediaEntry newMediaEntry, final MediaEntry mediaEntry) {
         mediaEntry.setTitle(newMediaEntry.getTitle());
         mediaEntry.setBasePath(newMediaEntry.getBasePath());
         mediaEntry.setPath(newMediaEntry.getPath());
@@ -172,7 +179,7 @@ public class MediaLoader {
         if (mediaEntry.getCurrentEpisodeNumber() > mediaEntry.getEpisodeNumber()) {
             mediaEntry.setCurrentEpisodeNumber(mediaEntry.getEpisodeNumber());
         }
-        mediaRepository.update(mediaEntry);
+        MediaHandAppController.triggerMediaEntryUpdate(mediaEntry);
     }
 
     public File getEpisode(final String absolutePath, final int episode) throws IOException {

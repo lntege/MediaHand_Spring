@@ -11,6 +11,7 @@ import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
+import javax.persistence.PostLoad;
 import javax.persistence.Transient;
 
 import com.intege.mediahand.WatchState;
@@ -110,15 +111,18 @@ public class MediaEntry {
     @Transient
     private boolean available;
 
-    public MediaEntry(String title) {
-        this(0, title, 0, null, null, 0, null, 0, null, 0, null, 0, null, 0, null, null);
+    MediaEntry() {
     }
 
-    public MediaEntry(int id, String title, int episodeNumber, String mediaType, WatchState watchState, int rating, String path, int currentEpisode, LocalDate added,
-                      int episodeLength, LocalDate watchedDate, int watchedCount, DirectoryEntry basePath, int volume, String audioTrack, String subtitleTrack) {
+    @PostLoad
+    public void init() {
+        this.available = new File(getAbsolutePath()).exists();
+    }
+
+    public MediaEntry(String title, int episodeNumber, String mediaType, WatchState watchState, int rating, String path, int currentEpisode, LocalDate added, int episodeLength,
+                      LocalDate watchedDate, int watchedCount, DirectoryEntry basePath, int volume, String audioTrack, String subtitleTrack) {
         Check.notNullArgument(title, "title");
 
-        this.id = id;
         this.title = title;
         this.episodeNumber = episodeNumber;
         this.mediaType = mediaType;
