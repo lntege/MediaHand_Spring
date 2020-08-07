@@ -13,7 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.intege.mediahand.controller.MediaHandAppController;
-import com.intege.mediahand.core.JFxMediaHandApplication;
+import com.intege.mediahand.core.JfxMediaHandApplication;
 import com.intege.mediahand.domain.old.DirectoryEntry;
 import com.intege.mediahand.domain.old.MediaEntry;
 import com.intege.mediahand.repository.RepositoryFactory;
@@ -84,7 +84,7 @@ public class MediaLoader {
 
     public void addSingleMedia() {
         DirectoryEntry basePath = RepositoryFactory.getBasePathRepository().findAll().get(0);
-        Optional<File> optionalDir = JFxMediaHandApplication.chooseMediaDirectory(Path.of(basePath.getPath()));
+        Optional<File> optionalDir = JfxMediaHandApplication.chooseMediaDirectory(Path.of(basePath.getPath()));
         if (optionalDir.isPresent()) {
             File dir = optionalDir.get();
             MediaEntry tempMediaEntry = createTempMediaEntry(dir.toPath(), null);

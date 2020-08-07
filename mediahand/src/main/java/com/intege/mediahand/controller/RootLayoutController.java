@@ -2,7 +2,7 @@ package com.intege.mediahand.controller;
 
 import org.springframework.stereotype.Component;
 
-import com.intege.mediahand.core.JFxMediaHandApplication;
+import com.intege.mediahand.core.JfxMediaHandApplication;
 import com.intege.mediahand.domain.old.MediaEntry;
 import com.intege.mediahand.repository.RepositoryFactory;
 
@@ -13,26 +13,26 @@ import net.rgielen.fxweaver.core.FxmlView;
 public class RootLayoutController {
 
     public void addDirectory() {
-        if (JFxMediaHandApplication.addBasePath()) {
-            JFxMediaHandApplication.getMediaHandAppController().fillTableView(RepositoryFactory.getMediaRepository().findAll());
+        if (JfxMediaHandApplication.addBasePath()) {
+            JfxMediaHandApplication.getMediaHandAppController().fillTableView(RepositoryFactory.getMediaRepository().findAll());
         }
     }
 
     public void loadNewMediaEntries() {
-        JFxMediaHandApplication.getMediaLoader().addAllMedia();
-        JFxMediaHandApplication.getMediaHandAppController().fillTableView(RepositoryFactory.getMediaRepository().findAll());
+        JfxMediaHandApplication.getMediaLoader().addAllMedia();
+        JfxMediaHandApplication.getMediaHandAppController().fillTableView(RepositoryFactory.getMediaRepository().findAll());
     }
 
     public void onRemove() {
-        MediaEntry selectedMediaEntry = JFxMediaHandApplication.getMediaHandAppController().getSelectedMediaEntry();
+        MediaEntry selectedMediaEntry = JfxMediaHandApplication.getMediaHandAppController().getSelectedMediaEntry();
         if (selectedMediaEntry != null) {
             RepositoryFactory.getMediaRepository().remove(selectedMediaEntry);
         }
     }
 
     public void addMedia() {
-        JFxMediaHandApplication.getMediaLoader().addSingleMedia();
-        JFxMediaHandApplication.getMediaHandAppController().fillTableView(RepositoryFactory.getMediaRepository().findAll());
+        JfxMediaHandApplication.getMediaLoader().addSingleMedia();
+        JfxMediaHandApplication.getMediaHandAppController().fillTableView(RepositoryFactory.getMediaRepository().findAll());
     }
 
 }

@@ -6,7 +6,7 @@ import java.util.TimerTask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.intege.mediahand.core.JFxMediaHandApplication;
+import com.intege.mediahand.core.JfxMediaHandApplication;
 import com.intege.mediahand.domain.old.MediaEntry;
 import com.intege.mediahand.repository.RepositoryFactory;
 import com.intege.mediahand.utils.MessageUtil;
@@ -96,7 +96,7 @@ public class ControlPane implements MediaPlayerComponent {
                     if (this.currentController.isButtonJustPressed(ControllerButton.BACK)) {
                         Platform.runLater(() -> {
                             stop();
-                            JFxMediaHandApplication.setDefaultScene();
+                            JfxMediaHandApplication.setDefaultScene();
                         });
                     }
                     if (this.currentController.isButtonPressed(ControllerButton.DPAD_LEFT)) {
@@ -116,7 +116,7 @@ public class ControlPane implements MediaPlayerComponent {
                         }
                     }
                     if (this.currentController.isButtonJustPressed(ControllerButton.Y)) {
-                        Platform.runLater(() -> JFxMediaHandApplication.getStage().setFullScreen(!JFxMediaHandApplication.getStage().isFullScreen()));
+                        Platform.runLater(() -> JfxMediaHandApplication.getStage().setFullScreen(!JfxMediaHandApplication.getStage().isFullScreen()));
                     }
                 } catch (ControllerUnpluggedException e) {
                     break;
@@ -136,7 +136,7 @@ public class ControlPane implements MediaPlayerComponent {
         scene.setOnKeyPressed(event -> {
             if (event.getCode() == KeyCode.ESCAPE) {
                 stop();
-                JFxMediaHandApplication.setDefaultScene();
+                JfxMediaHandApplication.setDefaultScene();
             } else if (event.getCode() == KeyCode.SPACE) {
                 this.embeddedMediaPlayer.controls().pause();
                 showTimedTimeSlider(ControlPane.TIME_SLIDER_DELAY * 3);
@@ -145,7 +145,7 @@ public class ControlPane implements MediaPlayerComponent {
                 updateMediaTimeSlider(this.embeddedMediaPlayer.status().time());
                 showTimedTimeSlider(ControlPane.TIME_SLIDER_DELAY);
             } else if (!event.isControlDown() && event.getCode() == KeyCode.F) {
-                JFxMediaHandApplication.getStage().setFullScreen(true);
+                JfxMediaHandApplication.getStage().setFullScreen(true);
             } else if (event.getCode() == KeyCode.UP) {
                 playNextEpisode();
             } else if (event.getCode() == KeyCode.DOWN) {
@@ -180,21 +180,21 @@ public class ControlPane implements MediaPlayerComponent {
     }
 
     private void playSelectedMedia(boolean fullScreen) {
-        JFxMediaHandApplication.getMediaHandAppController().playEmbeddedMedia();
-        JFxMediaHandApplication.getStage().setFullScreen(fullScreen);
+        JfxMediaHandApplication.getMediaHandAppController().playEmbeddedMedia();
+        JfxMediaHandApplication.getStage().setFullScreen(fullScreen);
     }
 
     private void playNextEpisode() {
         stop();
-        boolean fullScreen = JFxMediaHandApplication.getStage().isFullScreen();
-        JFxMediaHandApplication.getMediaHandAppController().increaseCurrentEpisode();
+        boolean fullScreen = JfxMediaHandApplication.getStage().isFullScreen();
+        JfxMediaHandApplication.getMediaHandAppController().increaseCurrentEpisode();
         playSelectedMedia(fullScreen);
     }
 
     private void playPreviousEpisode() {
         stop();
-        boolean fullScreen = JFxMediaHandApplication.getStage().isFullScreen();
-        JFxMediaHandApplication.getMediaHandAppController().decreaseCurrentEpisode();
+        boolean fullScreen = JfxMediaHandApplication.getStage().isFullScreen();
+        JfxMediaHandApplication.getMediaHandAppController().decreaseCurrentEpisode();
         playSelectedMedia(fullScreen);
     }
 

@@ -8,7 +8,7 @@ import javafx.application.Application;
 public class MediaHandApplication {
 
 	public static void main(String[] args) {
-		Application.launch(JFxMediaHandApplication.class, args);
-	}
+        Application.launch(JfxMediaHandApplication.class, args);
+    }
 
 }

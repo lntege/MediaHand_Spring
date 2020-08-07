@@ -2,10 +2,10 @@ package com.intege.mediahand.domain;
 
 import java.util.Objects;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
-import javax.validation.constraints.NotBlank;
 
 @Entity
 public class DirectoryEntry {
@@ -14,7 +14,7 @@ public class DirectoryEntry {
     @GeneratedValue
     private int id;
 
-    @NotBlank
+    @Column(unique = true)
     private String path;
 
     public DirectoryEntry(String path) {

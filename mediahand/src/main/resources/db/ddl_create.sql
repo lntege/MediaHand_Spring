@@ -10,7 +10,6 @@ create sequence hibernate_sequence start with 1 increment by 1
        id integer not null,
         added date,
         audioTrack varchar(255),
-        available boolean not null,
         currentEpisode integer not null,
         episodeLength integer not null,
         episodeNumber integer not null,
@@ -20,7 +19,7 @@ create sequence hibernate_sequence start with 1 increment by 1
         subtitleTrack varchar(255),
         title varchar(255),
         volume integer not null,
-        watchState integer,
+        watchState varchar(255),
         watchedCount integer not null,
         watchedDate date,
         basePath_id integer,
@@ -32,11 +31,20 @@ create sequence hibernate_sequence start with 1 increment by 1
         autoContinue boolean not null,
         profile varchar(255),
         showAll boolean not null,
-        watchState integer,
+        watchState varchar(255),
         windowHeight integer not null,
         windowWidth integer not null,
         primary key (id)
     )
+
+    alter table DirectoryEntry 
+       add constraint UK_bt0b3p8lm8yi06i7ux7ubq4o4 unique (path)
+
+    alter table MediaEntry 
+       add constraint UK_gxy37bxxmxgnvgbkrdo5nv6gk unique (title)
+
+    alter table SettingsEntry 
+       add constraint UK_6dwq37vrquhxaamp63e5dw81h unique (profile)
 
     alter table MediaEntry 
        add constraint FK1uuo2mxrkaxfc2k28jtidcu19 

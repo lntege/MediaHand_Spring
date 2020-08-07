@@ -17,7 +17,7 @@ import com.intege.mediahand.utils.MessageUtil;
 
 public class Database {
 
-    private static final Database database = new Database("AnimeDatabase", "lueko", "1234", false);
+//    private static final Database database = new Database("AnimeDatabase", "lueko", "1234", false);
 
     private Connection connection;
     private Statement statement;
@@ -27,7 +27,8 @@ public class Database {
     }
 
     public static Database getInstance() {
-        return Database.database;
+        //        return Database.database;
+        return null;
     }
 
     /**

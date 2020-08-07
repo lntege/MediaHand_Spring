@@ -11,7 +11,7 @@ import java.util.concurrent.Semaphore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.intege.mediahand.core.JFxMediaHandApplication;
+import com.intege.mediahand.core.JfxMediaHandApplication;
 import com.intege.mediahand.domain.old.MediaEntry;
 import com.intege.mediahand.repository.RepositoryFactory;
 import com.intege.mediahand.vlc.MediaPlayerComponent;
@@ -187,7 +187,7 @@ public class JavaFXDirectRenderingScene implements MediaPlayerComponent {
                     if (this.currentController.isButtonJustPressed(ControllerButton.BACK)) {
                         Platform.runLater(() -> {
                             stop();
-                            JFxMediaHandApplication.setDefaultScene();
+                            JfxMediaHandApplication.setDefaultScene();
                         });
                     }
                     if (this.currentController.isButtonPressed(ControllerButton.DPAD_LEFT)) {
@@ -296,16 +296,16 @@ public class JavaFXDirectRenderingScene implements MediaPlayerComponent {
     private void onMediaFinished() {
         boolean fullScreen = JavaFXDirectRenderingScene.this.stage.isFullScreen();
         stop();
-        JFxMediaHandApplication.getMediaHandAppController().increaseCurrentEpisode();
-        if (JFxMediaHandApplication.getMediaHandAppController().autoContinueCheckbox.isSelected()) {
+        JfxMediaHandApplication.getMediaHandAppController().increaseCurrentEpisode();
+        if (JfxMediaHandApplication.getMediaHandAppController().autoContinueCheckbox.isSelected()) {
             playSelectedMedia(fullScreen);
         } else {
-            JFxMediaHandApplication.setDefaultScene();
+            JfxMediaHandApplication.setDefaultScene();
         }
     }
 
     private void playSelectedMedia(boolean fullScreen) {
-        JFxMediaHandApplication.getMediaHandAppController().playEmbeddedMedia();
+        JfxMediaHandApplication.getMediaHandAppController().playEmbeddedMedia();
         JavaFXDirectRenderingScene.this.stage.setFullScreen(fullScreen);
     }
 
@@ -406,7 +406,7 @@ public class JavaFXDirectRenderingScene implements MediaPlayerComponent {
         scene.setOnKeyPressed(event -> {
             if (event.getCode() == KeyCode.ESCAPE) {
                 stop();
-                JFxMediaHandApplication.setDefaultScene();
+                JfxMediaHandApplication.setDefaultScene();
             } else if (event.getCode() == KeyCode.SPACE) {
                 this.mediaPlayer.controls().pause();
                 showTimedTimeSlider(JavaFXDirectRenderingScene.DELAY * 3);
@@ -425,14 +425,14 @@ public class JavaFXDirectRenderingScene implements MediaPlayerComponent {
     private void playNextEpisode() {
         boolean fullScreen = this.stage.isFullScreen();
         stop();
-        JFxMediaHandApplication.getMediaHandAppController().increaseCurrentEpisode();
+        JfxMediaHandApplication.getMediaHandAppController().increaseCurrentEpisode();
         playSelectedMedia(fullScreen);
     }
 
     private void playPreviousEpisode() {
         boolean fullScreen = this.stage.isFullScreen();
         stop();
-        JFxMediaHandApplication.getMediaHandAppController().decreaseCurrentEpisode();
+        JfxMediaHandApplication.getMediaHandAppController().decreaseCurrentEpisode();
         playSelectedMedia(fullScreen);
     }
 

@@ -4,10 +4,14 @@ import java.io.File;
 import java.time.LocalDate;
 import java.util.Objects;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
+import javax.persistence.Transient;
 
 import com.intege.mediahand.WatchState;
 import com.intege.utils.Check;
@@ -25,6 +29,7 @@ public class MediaEntry {
     /**
      * Title of the media (most likely the name of the directory).
      */
+    @Column(unique = true)
     private String title;
 
     /**
@@ -40,6 +45,7 @@ public class MediaEntry {
     /**
      * State of the media (Watching, Watched, ...).
      */
+    @Enumerated(EnumType.STRING)
     private WatchState watchState;
 
     /**
@@ -84,11 +90,6 @@ public class MediaEntry {
     private DirectoryEntry basePath;
 
     /**
-     * True if the media is available and can be played (e.g. false, if an external drive is not connected).
-     */
-    private boolean available;
-
-    /**
      * Volume of the media player to use for this media.
      */
     private int volume;
@@ -103,11 +104,18 @@ public class MediaEntry {
      */
     private String subtitleTrack;
 
+    /**
+     * True if the media is available and can be played (e.g. false, if an external drive is not connected).
+     */
+    @Transient
+    private boolean available;
+
     public MediaEntry(String title) {
         this(0, title, 0, null, null, 0, null, 0, null, 0, null, 0, null, 0, null, null);
     }
 
-    public MediaEntry(int id, String title, int episodeNumber, String mediaType, WatchState watchState, int rating, String path, int currentEpisode, LocalDate added, int episodeLength, LocalDate watchedDate, int watchedCount, DirectoryEntry basePath, int volume, String audioTrack, String subtitleTrack) {
+    public MediaEntry(int id, String title, int episodeNumber, String mediaType, WatchState watchState, int rating, String path, int currentEpisode, LocalDate added,
+                      int episodeLength, LocalDate watchedDate, int watchedCount, DirectoryEntry basePath, int volume, String audioTrack, String subtitleTrack) {
         Check.notNullArgument(title, "title");
 
         this.id = id;
@@ -304,22 +312,11 @@ public class MediaEntry {
             return false;
         }
         MediaEntry that = (MediaEntry) o;
-        return this.id == that.id &&
-                this.episodeNumber == that.episodeNumber &&
-                this.rating == that.rating &&
-                this.currentEpisode == that.currentEpisode &&
-                this.episodeLength == that.episodeLength &&
-                this.watchedCount == that.watchedCount &&
-                this.available == that.available &&
-                this.volume == that.volume &&
-                this.title.equals(that.title) &&
-                Objects.equals(this.audioTrack, that.audioTrack) &&
-                Objects.equals(this.subtitleTrack, that.subtitleTrack) &&
-                this.watchState == that.watchState &&
-                Objects.equals(this.path, that.path) &&
-                Objects.equals(this.added, that.added) &&
-                Objects.equals(this.watchedDate, that.watchedDate) &&
-                Objects.equals(this.basePath, that.basePath);
+        return this.id == that.id && this.episodeNumber == that.episodeNumber && this.rating == that.rating && this.currentEpisode == that.currentEpisode
+                && this.episodeLength == that.episodeLength && this.watchedCount == that.watchedCount && this.available == that.available && this.volume == that.volume
+                && this.title.equals(that.title) && Objects.equals(this.audioTrack, that.audioTrack) && Objects.equals(this.subtitleTrack, that.subtitleTrack)
+                && this.watchState == that.watchState && Objects.equals(this.path, that.path) && Objects.equals(this.added, that.added)
+                && Objects.equals(this.watchedDate, that.watchedDate) && Objects.equals(this.basePath, that.basePath);
     }
 
     @Override

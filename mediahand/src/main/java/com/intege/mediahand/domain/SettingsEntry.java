@@ -2,7 +2,10 @@ package com.intege.mediahand.domain;
 
 import java.util.Objects;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 
@@ -16,6 +19,7 @@ public class SettingsEntry {
     @GeneratedValue
     private int id;
 
+    @Column(unique = true)
     private String profile;
 
     private int windowWidth;
@@ -26,6 +30,7 @@ public class SettingsEntry {
 
     private boolean showAll;
 
+    @Enumerated(EnumType.STRING)
     private WatchState watchState;
 
     public SettingsEntry(String profile, int windowWidth, int windowHeight, boolean autoContinue, boolean showAll, WatchState watchState) {

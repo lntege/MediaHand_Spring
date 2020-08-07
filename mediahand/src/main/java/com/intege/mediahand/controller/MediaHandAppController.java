@@ -13,7 +13,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import com.intege.mediahand.WatchState;
-import com.intege.mediahand.core.JFxMediaHandApplication;
+import com.intege.mediahand.core.JfxMediaHandApplication;
 import com.intege.mediahand.domain.old.MediaEntry;
 import com.intege.mediahand.repository.RepositoryFactory;
 import com.intege.mediahand.utils.MessageUtil;
@@ -155,13 +155,13 @@ public class MediaHandAppController {
 
     public void onMediaFinished() {
         this.controlPane.stop();
-        boolean fullScreen = JFxMediaHandApplication.getStage().isFullScreen();
+        boolean fullScreen = JfxMediaHandApplication.getStage().isFullScreen();
         increaseCurrentEpisode();
         if (this.autoContinueCheckbox.isSelected()) {
             playEmbeddedMedia();
-            JFxMediaHandApplication.getStage().setFullScreen(fullScreen);
+            JfxMediaHandApplication.getStage().setFullScreen(fullScreen);
         } else {
-            JFxMediaHandApplication.setDefaultScene();
+            JfxMediaHandApplication.setDefaultScene();
         }
     }
 
@@ -274,20 +274,19 @@ public class MediaHandAppController {
                     + selectedItem.getAbsolutePath(), "Selected media is not available. Deselect 'Show All' to show only media of connected media directories.");
         } else {
             try {
-                File file = JFxMediaHandApplication.getMediaLoader().getEpisode(selectedItem.getAbsolutePath(), selectedItem.getCurrentEpisodeNumber());
+                File file = JfxMediaHandApplication.getMediaLoader().getEpisode(selectedItem.getAbsolutePath(), selectedItem.getCurrentEpisodeNumber());
 
                 String windowTitle = selectedItem.getTitle() + " : Episode " + selectedItem.getCurrentEpisodeNumber();
                 this.isRunning = false;
 
-                JFxMediaHandApplication.getStage().setTitle(windowTitle);
-                JFxMediaHandApplication.getStage().setScene(this.javaFxMediaPlayer.getScene());
+                JfxMediaHandApplication.getStage().setTitle(windowTitle);
+                JfxMediaHandApplication.getStage().setScene(this.javaFxMediaPlayer.getScene());
 
                 if (this.javaFxMediaPlayer.start(file)) {
                     this.controlPane.update(selectedItem);
                     this.mediaPlayerContextMenu.update(selectedItem);
                 } else {
-                    MessageUtil.warningAlert("Play embedded media failed",
-                            "Could not play selected entry " + selectedItem.getTitle());
+                    MessageUtil.warningAlert("Play embedded media failed", "Could not play selected entry " + selectedItem.getTitle());
                 }
             } catch (IOException e) {
                 MessageUtil.warningAlert(e);
@@ -310,8 +309,8 @@ public class MediaHandAppController {
         this.controlPane = new ControlPane(this.javaFxMediaPlayer.getEmbeddedMediaPlayer(), this.javaFxMediaPlayer.getScene());
         stackPane.getChildren().add(this.controlPane.getBorderPane());
 
-        JFxMediaHandApplication.getStage().setOnCloseRequest(new StopRenderingSceneHandler(List.of(this.controlPane, this.javaFxMediaPlayer)));
-        JFxMediaHandApplication.getStage().setFullScreenExitKeyCombination(new KeyCodeCombination(KeyCode.F, KeyCombination.CONTROL_DOWN));
+        JfxMediaHandApplication.getStage().setOnCloseRequest(new StopRenderingSceneHandler(List.of(this.controlPane, this.javaFxMediaPlayer)));
+        JfxMediaHandApplication.getStage().setFullScreenExitKeyCombination(new KeyCodeCombination(KeyCode.F, KeyCombination.CONTROL_DOWN));
     }
 
     private void playMedia() {
@@ -324,7 +323,7 @@ public class MediaHandAppController {
         } else {
             Desktop desktop = Desktop.getDesktop();
             try {
-                File file = JFxMediaHandApplication.getMediaLoader().getEpisode(selectedItem.getAbsolutePath(), selectedItem.getCurrentEpisodeNumber());
+                File file = JfxMediaHandApplication.getMediaLoader().getEpisode(selectedItem.getAbsolutePath(), selectedItem.getCurrentEpisodeNumber());
                 try {
                     desktop.open(file);
                 } catch (IOException e) {
@@ -338,9 +337,9 @@ public class MediaHandAppController {
     }
 
     private void changeMediaLocation() {
-        Optional<File> directory = JFxMediaHandApplication.chooseMediaDirectory();
+        Optional<File> directory = JfxMediaHandApplication.chooseMediaDirectory();
         if (directory.isPresent()) {
-            MediaEntry updatedMediaEntry = JFxMediaHandApplication.getMediaLoader().createTempMediaEntry(directory.get().toPath());
+            MediaEntry updatedMediaEntry = JfxMediaHandApplication.getMediaLoader().createTempMediaEntry(directory.get().toPath());
             updateMedia(updatedMediaEntry);
         }
     }
@@ -348,7 +347,7 @@ public class MediaHandAppController {
     private void updateMedia(final MediaEntry mediaEntry) {
         MediaEntry selectedItem = this.mediaTableView.getSelectionModel().getSelectedItem();
         if (selectedItem != null) {
-            JFxMediaHandApplication.getMediaLoader().updateMediaEntry(mediaEntry, RepositoryFactory.getMediaRepository(), selectedItem);
+            JfxMediaHandApplication.getMediaLoader().updateMediaEntry(mediaEntry, RepositoryFactory.getMediaRepository(), selectedItem);
         }
     }
 
