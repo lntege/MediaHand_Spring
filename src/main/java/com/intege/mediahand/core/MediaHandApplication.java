@@ -9,13 +9,15 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 import javafx.application.Application;
 
 @SpringBootApplication
-@EntityScan("com.intege.*")
-@EnableJpaRepositories("com.intege.*")
-@ComponentScan("com.intege.*")
+@EntityScan(MediaHandApplication.BASE_PACKAGE)
+@EnableJpaRepositories(MediaHandApplication.BASE_PACKAGE)
+@ComponentScan(MediaHandApplication.BASE_PACKAGE)
 @EnableTransactionManagement
 public class MediaHandApplication {
 
-	public static void main(String[] args) {
+    public static final String BASE_PACKAGE = "com.intege.*";
+
+    public static void main(String[] args) {
         Application.launch(JfxMediaHandApplication.class, args);
     }
 

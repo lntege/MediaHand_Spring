@@ -17,14 +17,20 @@ import javax.persistence.Transient;
 import com.intege.mediahand.WatchState;
 import com.intege.utils.Check;
 
+import lombok.AccessLevel;
+import lombok.Data;
+import lombok.Setter;
+
 @Entity
-public class MediaEntry {
+public @Data
+class MediaEntry {
 
     /**
      * Id in the database.
      */
     @Id
     @GeneratedValue
+    @Setter(AccessLevel.NONE)
     private int id;
 
     /**
@@ -142,17 +148,9 @@ public class MediaEntry {
         this.available = new File(getAbsolutePath()).exists();
     }
 
-    public String getBasePathId() {
-        if (this.basePath != null) {
-            return this.basePath.getId() + "";
-        } else {
-            return null;
-        }
-    }
-
     public String getAbsolutePath() {
         if (this.basePath != null) {
-            return this.getBasePath().getPath() + this.path;
+            return this.basePath.getPath() + this.path;
         } else {
             return Objects.requireNonNullElse(this.path, "");
         }
@@ -166,165 +164,4 @@ public class MediaEntry {
         return mediaType.equals("All") || mediaType.equals(this.mediaType);
     }
 
-    public int getId() {
-        return this.id;
-    }
-
-    public String getTitle() {
-        return this.title;
-    }
-
-    public void setTitle(String title) {
-        this.title = title;
-    }
-
-    public int getEpisodeNumber() {
-        return this.episodeNumber;
-    }
-
-    public void setEpisodeNumber(int episodeNumber) {
-        this.episodeNumber = episodeNumber;
-    }
-
-    public String getMediaType() {
-        return this.mediaType;
-    }
-
-    public void setMediaType(String mediaType) {
-        this.mediaType = mediaType;
-    }
-
-    public WatchState getWatchState() {
-        return this.watchState;
-    }
-
-    public void setWatchState(WatchState watchState) {
-        this.watchState = watchState;
-    }
-
-    public int getRating() {
-        return this.rating;
-    }
-
-    public void setRating(int rating) {
-        this.rating = rating;
-    }
-
-    public String getPath() {
-        return this.path;
-    }
-
-    public void setPath(String path) {
-        this.path = path;
-    }
-
-    public int getCurrentEpisodeNumber() {
-        return this.currentEpisode;
-    }
-
-    public void setCurrentEpisodeNumber(int currentEpisode) {
-        this.currentEpisode = currentEpisode;
-    }
-
-    public String getCurrentEpisode() {
-        return this.currentEpisode + "/" + this.episodeNumber;
-    }
-
-    public LocalDate getAdded() {
-        return this.added;
-    }
-
-    public void setAdded(LocalDate added) {
-        this.added = added;
-    }
-
-    public int getEpisodeLength() {
-        return this.episodeLength;
-    }
-
-    public void setEpisodeLength(int episodeLength) {
-        this.episodeLength = episodeLength;
-    }
-
-    public LocalDate getWatchedDate() {
-        return this.watchedDate;
-    }
-
-    public void setWatchedDate(LocalDate watchedDate) {
-        this.watchedDate = watchedDate;
-    }
-
-    public int getWatchedCount() {
-        return this.watchedCount;
-    }
-
-    public void setWatchedCount(int watchedCount) {
-        this.watchedCount = watchedCount;
-    }
-
-    public DirectoryEntry getBasePath() {
-        return this.basePath;
-    }
-
-    public void setBasePath(DirectoryEntry basePath) {
-        this.basePath = basePath;
-    }
-
-    public boolean isAvailable() {
-        return this.available;
-    }
-
-    public void setAvailable(boolean available) {
-        this.available = available;
-    }
-
-    public int getVolume() {
-        return this.volume;
-    }
-
-    public void setVolume(int volume) {
-        this.volume = volume;
-    }
-
-    public String getAudioTrack() {
-        return this.audioTrack;
-    }
-
-    public void setAudioTrack(final String audioTrack) {
-        this.audioTrack = audioTrack;
-    }
-
-    public String getSubtitleTrack() {
-        return this.subtitleTrack;
-    }
-
-    public void setSubtitleTrack(final String subtitleTrack) {
-        this.subtitleTrack = subtitleTrack;
-    }
-
-    @Override
-    public String toString() {
-        return this.title;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        MediaEntry that = (MediaEntry) o;
-        return this.id == that.id && this.episodeNumber == that.episodeNumber && this.rating == that.rating && this.currentEpisode == that.currentEpisode
-                && this.episodeLength == that.episodeLength && this.watchedCount == that.watchedCount && this.available == that.available && this.volume == that.volume
-                && this.title.equals(that.title) && Objects.equals(this.audioTrack, that.audioTrack) && Objects.equals(this.subtitleTrack, that.subtitleTrack)
-                && this.watchState == that.watchState && Objects.equals(this.path, that.path) && Objects.equals(this.added, that.added)
-                && Objects.equals(this.watchedDate, that.watchedDate) && Objects.equals(this.basePath, that.basePath);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(this.id, this.title, this.episodeNumber, this.mediaType, this.watchState, this.rating, this.path, this.currentEpisode, this.added, this.episodeLength, this.watchedDate, this.watchedCount, this.basePath, this.available, this.volume);
-    }
 }

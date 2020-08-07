@@ -3,9 +3,6 @@ package com.intege.mediahand.vlc;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.intege.mediahand.core.JfxMediaHandApplication;
 import com.intege.mediahand.domain.MediaEntry;
 import com.intege.mediahand.domain.repository.MediaEntryRepository;
@@ -25,12 +22,12 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import lombok.extern.slf4j.Slf4j;
 import uk.co.caprica.vlcj.player.base.MediaPlayerEventAdapter;
 import uk.co.caprica.vlcj.player.embedded.EmbeddedMediaPlayer;
 
+@Slf4j
 public class ControlPane implements MediaPlayerComponent {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(ControlPane.class);
 
     private static final long TIME_SLIDER_DELAY = 1000;
 
@@ -127,7 +124,7 @@ public class ControlPane implements MediaPlayerComponent {
                 try {
                     Thread.sleep(50);
                 } catch (InterruptedException e) {
-                    ControlPane.LOGGER.error("Controller thread: sleep", e);
+                    ControlPane.log.error("Controller thread: sleep", e);
                     Thread.currentThread().interrupt();
                 }
             }
@@ -221,9 +218,7 @@ public class ControlPane implements MediaPlayerComponent {
         Label currentTimeLabel = new Label(length);
         currentTimeLabel.setTextFill(Color.YELLOW);
         this.mediaTimeSlider.valueProperty().addListener((observable, oldValue, newValue) -> {
-            currentTimeLabel.setText(
-                    (int) (newValue.doubleValue() / 1) + ":" + (int) ((newValue.doubleValue() % 1) * 60) + " - "
-                            + length);
+            currentTimeLabel.setText((int) (newValue.doubleValue() / 1) + ":" + (int) ((newValue.doubleValue() % 1) * 60) + " - " + length);
         });
         VBox vBox = new VBox(this.mediaTimeSlider, currentTimeLabel);
         vBox.setPadding(new Insets(3, 0, 5, 5));
@@ -255,8 +250,7 @@ public class ControlPane implements MediaPlayerComponent {
         Slider slider = new Slider(0, mediaDuration, 0);
         slider.setShowTickLabels(false);
         slider.setShowTickMarks(false);
-        slider.setOnMouseClicked(event -> this.embeddedMediaPlayer.controls().setTime((long) (slider.getValue()
-                * 60000)));
+        slider.setOnMouseClicked(event -> this.embeddedMediaPlayer.controls().setTime((long) (slider.getValue() * 60000)));
         return slider;
     }
 

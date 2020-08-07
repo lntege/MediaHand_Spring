@@ -1,17 +1,21 @@
 package com.intege.mediahand.domain;
 
-import java.util.Objects;
-
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 
+import lombok.AccessLevel;
+import lombok.Data;
+import lombok.Setter;
+
 @Entity
-public class DirectoryEntry {
+public @Data
+class DirectoryEntry {
 
     @Id
     @GeneratedValue
+    @Setter(AccessLevel.NONE)
     private int id;
 
     @Column(unique = true)
@@ -29,37 +33,4 @@ public class DirectoryEntry {
         this.path = path;
     }
 
-    public int getId() {
-        return this.id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
-    }
-
-    public String getPath() {
-        return this.path;
-    }
-
-    public void setPath(String path) {
-        this.path = path;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        DirectoryEntry that = (DirectoryEntry) o;
-        return this.id == that.id &&
-                this.path.equals(that.path);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(this.id, this.path);
-    }
 }

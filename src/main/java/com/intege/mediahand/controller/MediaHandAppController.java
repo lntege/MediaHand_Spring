@@ -8,8 +8,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -48,15 +46,15 @@ import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.input.KeyCombination;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.StackPane;
+import lombok.extern.slf4j.Slf4j;
 import net.rgielen.fxweaver.core.FxmlView;
 import uk.co.caprica.vlcj.player.base.MediaPlayer;
 import uk.co.caprica.vlcj.player.base.MediaPlayerEventAdapter;
 
+@Slf4j
 @Component
 @FxmlView("mediaHandApp.fxml")
 public class MediaHandAppController {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(MediaHandAppController.class);
 
     @FXML
     public TableView<MediaEntry> mediaTableView;
@@ -145,7 +143,7 @@ public class MediaHandAppController {
                     this.episodeEdit.getSelectionModel().select(null);
                     this.episodeEdit.setItems(FXCollections.observableArrayList(episodes));
                 }
-                this.episodeEdit.getSelectionModel().select(newValue.getCurrentEpisodeNumber() - 1);
+                this.episodeEdit.getSelectionModel().select(newValue.getCurrentEpisode() - 1);
                 this.watchedEdit.setValue(newValue.getWatchedDate());
             } else {
                 this.selectedMediaTitle.setText("Selected media");
@@ -162,8 +160,8 @@ public class MediaHandAppController {
         });
         this.episodeEdit.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             MediaEntry selectedItem = this.mediaTableView.getSelectionModel().getSelectedItem();
-            if (selectedItem != null && newValue != null && selectedItem.getCurrentEpisodeNumber() != newValue) {
-                selectedItem.setCurrentEpisodeNumber(newValue);
+            if (selectedItem != null && newValue != null && selectedItem.getCurrentEpisode() != newValue) {
+                selectedItem.setCurrentEpisode(newValue);
                 this.mediaEntryRepository.save(selectedItem);
                 MediaHandAppController.triggerMediaEntryUpdate(selectedItem);
             }
@@ -211,9 +209,8 @@ public class MediaHandAppController {
             while (this.isRunning) {
                 controllerManager.update();
                 try {
-                    if (this.currentController.isButtonJustPressed(ControllerButton.DPAD_DOWN) || (
-                            this.currentController.isButtonPressed(ControllerButton.DPAD_DOWN)
-                                    && this.currentController.isButtonPressed(ControllerButton.A))) {
+                    if (this.currentController.isButtonJustPressed(ControllerButton.DPAD_DOWN) || (this.currentController.isButtonPressed(ControllerButton.DPAD_DOWN)
+                            && this.currentController.isButtonPressed(ControllerButton.A))) {
                         Platform.runLater(() -> {
                             if (this.mediaTableView.getSelectionModel().isEmpty()) {
                                 this.mediaTableView.getSelectionModel().selectFirst();
@@ -223,9 +220,8 @@ public class MediaHandAppController {
                             }
                         });
                     }
-                    if (this.currentController.isButtonJustPressed(ControllerButton.DPAD_UP) || (
-                            this.currentController.isButtonPressed(ControllerButton.DPAD_UP)
-                                    && this.currentController.isButtonPressed(ControllerButton.A))) {
+                    if (this.currentController.isButtonJustPressed(ControllerButton.DPAD_UP) || (this.currentController.isButtonPressed(ControllerButton.DPAD_UP)
+                            && this.currentController.isButtonPressed(ControllerButton.A))) {
                         Platform.runLater(() -> {
                             this.mediaTableView.getSelectionModel().selectPrevious();
                             this.mediaTableView.scrollTo(this.mediaTableView.getSelectionModel().selectedItemProperty().get());
@@ -246,7 +242,7 @@ public class MediaHandAppController {
                 try {
                     Thread.sleep(50);
                 } catch (InterruptedException e) {
-                    MediaHandAppController.LOGGER.error("Controller thread: sleep", e);
+                    MediaHandAppController.log.error("Controller thread: sleep", e);
                     Thread.currentThread().interrupt();
                 }
             }
@@ -304,13 +300,13 @@ public class MediaHandAppController {
         if (selectedItem == null) {
             MessageUtil.infoAlert("Play media", "Please select a media entry.");
         } else if (!selectedItem.isAvailable()) {
-            MessageUtil.infoAlert("Play media: "
-                    + selectedItem.getAbsolutePath(), "Selected media is not available. Deselect 'Show All' to show only media of connected media directories.");
+            MessageUtil.infoAlert(
+                    "Play media: " + selectedItem.getAbsolutePath(), "Selected media is not available. Deselect 'Show All' to show only media of connected media directories.");
         } else {
             try {
-                File file = this.mediaLoader.getEpisode(selectedItem.getAbsolutePath(), selectedItem.getCurrentEpisodeNumber());
+                File file = this.mediaLoader.getEpisode(selectedItem.getAbsolutePath(), selectedItem.getCurrentEpisode());
 
-                String windowTitle = selectedItem.getTitle() + " : Episode " + selectedItem.getCurrentEpisodeNumber();
+                String windowTitle = selectedItem.getTitle() + " : Episode " + selectedItem.getCurrentEpisode();
                 this.isRunning = false;
 
                 JfxMediaHandApplication.getStage().setTitle(windowTitle);
@@ -352,12 +348,12 @@ public class MediaHandAppController {
         if (selectedItem == null) {
             MessageUtil.infoAlert("Play media", "Please select a media entry.");
         } else if (!selectedItem.isAvailable()) {
-            MessageUtil.infoAlert("Play media: "
-                    + selectedItem.getAbsolutePath(), "Selected media is not available. Deselect 'Show All' to show only media of connected media directories.");
+            MessageUtil.infoAlert(
+                    "Play media: " + selectedItem.getAbsolutePath(), "Selected media is not available. Deselect 'Show All' to show only media of connected media directories.");
         } else {
             Desktop desktop = Desktop.getDesktop();
             try {
-                File file = this.mediaLoader.getEpisode(selectedItem.getAbsolutePath(), selectedItem.getCurrentEpisodeNumber());
+                File file = this.mediaLoader.getEpisode(selectedItem.getAbsolutePath(), selectedItem.getCurrentEpisode());
                 try {
                     desktop.open(file);
                 } catch (IOException e) {
@@ -387,8 +383,8 @@ public class MediaHandAppController {
 
     public void increaseCurrentEpisode() {
         MediaEntry selectedItem = this.mediaTableView.getSelectionModel().getSelectedItem();
-        if (selectedItem != null && selectedItem.getCurrentEpisodeNumber() < selectedItem.getEpisodeNumber()) {
-            selectedItem.setCurrentEpisodeNumber(selectedItem.getCurrentEpisodeNumber() + 1);
+        if (selectedItem != null && selectedItem.getCurrentEpisode() < selectedItem.getEpisodeNumber()) {
+            selectedItem.setCurrentEpisode(selectedItem.getCurrentEpisode() + 1);
             this.mediaEntryRepository.save(selectedItem);
             MediaHandAppController.triggerMediaEntryUpdate(selectedItem);
         }
@@ -396,8 +392,8 @@ public class MediaHandAppController {
 
     public void decreaseCurrentEpisode() {
         MediaEntry selectedItem = this.mediaTableView.getSelectionModel().getSelectedItem();
-        if (selectedItem != null && selectedItem.getCurrentEpisodeNumber() > 1) {
-            selectedItem.setCurrentEpisodeNumber(selectedItem.getCurrentEpisodeNumber() - 1);
+        if (selectedItem != null && selectedItem.getCurrentEpisode() > 1) {
+            selectedItem.setCurrentEpisode(selectedItem.getCurrentEpisode() - 1);
             this.mediaEntryRepository.save(selectedItem);
             MediaHandAppController.triggerMediaEntryUpdate(selectedItem);
         }
@@ -424,8 +420,7 @@ public class MediaHandAppController {
     }
 
     private boolean filter(final MediaEntry mediaEntry, final String textFilter) {
-        if ((this.showAllCheckbox.isSelected() || mediaEntry.isAvailable())
-                && mediaEntry.filterByWatchState(this.watchStateFilter.getSelectionModel().getSelectedItem())
+        if ((this.showAllCheckbox.isSelected() || mediaEntry.isAvailable()) && mediaEntry.filterByWatchState(this.watchStateFilter.getSelectionModel().getSelectedItem())
                 && mediaEntry.filterByMediaType(this.typeFilter.getSelectionModel().getSelectedItem())) {
             if (textFilter == null || textFilter.isEmpty()) {
                 return true;

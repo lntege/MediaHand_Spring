@@ -33,6 +33,8 @@ create sequence hibernate_sequence start with 1 increment by 1
         showAll boolean not null,
         watchState varchar(255),
         windowHeight integer not null,
+        windowPositionX integer not null,
+        windowPositionY integer not null,
         windowWidth integer not null,
         primary key (id)
     )

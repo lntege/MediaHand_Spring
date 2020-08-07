@@ -17,22 +17,23 @@ import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.cfg.Environment;
 import org.hibernate.tool.hbm2ddl.SchemaExport;
 import org.hibernate.tool.schema.TargetType;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 public class SchemaGenerator {
 
-    public static final String DDL_FILENAME = "ddl_create.sql";
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(SchemaGenerator.class);
+    public static final String DDL_FILENAME = "src/main/resources/db/ddl_create.sql";
+    public static final String SRC_PATH = "src/main/java/";
+    public static final String BASE_PACKAGE = "com.intege";
 
     private SchemaGenerator() {
         super();
     }
 
     public static void main(final String[] args) throws IOException, ClassNotFoundException {
-        if (Files.deleteIfExists(Path.of("mediahand/src/main/resources/db/" + DDL_FILENAME))) {
-            LOGGER.info("Deleted old schema file " + DDL_FILENAME);
+        if (Files.deleteIfExists(Path.of(DDL_FILENAME))) {
+            log.info("Deleted old schema file " + DDL_FILENAME);
         }
         Map<String, String> settings = new HashMap<>();
         settings.put(Environment.URL, "jdbc:hsqldb:mem:schema");
@@ -40,7 +41,7 @@ public class SchemaGenerator {
         StandardServiceRegistry serviceRegistry = new StandardServiceRegistryBuilder().applySettings(settings).build();
 
         MetadataSources metadataSources = new MetadataSources(serviceRegistry);
-        for (Class<?> clazz : getClasses("com.intege.mediahand")) {
+        for (Class<?> clazz : getClasses(BASE_PACKAGE)) {
             if (clazz.isAnnotationPresent(javax.persistence.Entity.class)) {
                 metadataSources.addAnnotatedClass(clazz);
             }
@@ -49,14 +50,14 @@ public class SchemaGenerator {
 
         SchemaExport schemaExport = new SchemaExport();
         schemaExport.setFormat(true);
-        schemaExport.setOutputFile("mediahand/src/main/resources/db/" + DDL_FILENAME);
+        schemaExport.setOutputFile(DDL_FILENAME);
         schemaExport.createOnly(EnumSet.of(TargetType.SCRIPT), metadata);
     }
 
     private static List<Class<?>> getClasses(final String packageName) throws ClassNotFoundException {
         String path = packageName.replace('.', '/');
         System.out.println(path);
-        File dir = new File("mediahand/src/main/java/" + path);
+        File dir = new File(SRC_PATH + path);
         return findClasses(dir, packageName);
     }
 
@@ -80,8 +81,7 @@ public class SchemaGenerator {
                 assert !file.getName().contains(".");
                 classes.addAll(findClasses(file, packageName + "." + file.getName()));
             } else if (file.getName().endsWith(".java")) {
-                classes.add(Class.forName(
-                        packageName + '.' + file.getName().substring(0, file.getName().length() - 5)));
+                classes.add(Class.forName(packageName + '.' + file.getName().substring(0, file.getName().length() - 5)));
             }
         }
         return classes;

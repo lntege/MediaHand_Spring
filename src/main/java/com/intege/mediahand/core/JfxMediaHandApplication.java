@@ -4,8 +4,6 @@ import java.io.File;
 import java.nio.file.Path;
 import java.util.Optional;
 
-import javax.transaction.Transactional;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
 import org.springframework.boot.builder.SpringApplicationBuilder;
@@ -22,10 +20,12 @@ import com.intege.mediahand.domain.repository.SettingsEntryRepository;
 
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.DirectoryChooser;
+import javafx.stage.Screen;
 import javafx.stage.Stage;
 import net.rgielen.fxweaver.core.FxControllerAndView;
 import net.rgielen.fxweaver.core.FxWeaver;
@@ -75,16 +75,18 @@ public class JfxMediaHandApplication extends Application {
     }
 
     @Override
-    @Transactional
     public void stop() {
-        JfxMediaHandApplication.mediaHandAppController.stopControllerListener();
-        int width = (int) JfxMediaHandApplication.stage.getWidth();
-        int height = (int) JfxMediaHandApplication.stage.getHeight();
+        mediaHandAppController.stopControllerListener();
+        int width = (int) stage.getWidth();
+        int height = (int) stage.getHeight();
         this.settingsEntry.setWindowWidth(width);
         this.settingsEntry.setWindowHeight(height);
-        this.settingsEntry.setAutoContinue(JfxMediaHandApplication.mediaHandAppController.autoContinueCheckbox.isSelected());
-        this.settingsEntry.setShowAll(JfxMediaHandApplication.mediaHandAppController.showAllCheckbox.isSelected());
-        this.settingsEntry.setWatchState(WatchState.lookupByName(JfxMediaHandApplication.mediaHandAppController.watchStateFilter.getSelectionModel().getSelectedItem()));
+        this.settingsEntry.setWindowPositionX((int) stage.getX());
+        this.settingsEntry.setWindowPositionY((int) stage.getY());
+        this.settingsEntry.setAutoContinue(mediaHandAppController.autoContinueCheckbox.isSelected());
+        this.settingsEntry.setShowAll(mediaHandAppController.showAllCheckbox.isSelected());
+        this.settingsEntry.setWatchState(WatchState.lookupByName(mediaHandAppController.watchStateFilter.getSelectionModel().getSelectedItem()));
+        this.settingsEntryRepository.save(this.settingsEntry);
 
         this.applicationContext.close();
         Platform.exit();
@@ -94,17 +96,21 @@ public class JfxMediaHandApplication extends Application {
         FxWeaver fxWeaver = this.applicationContext.getBean(FxWeaver.class);
         this.rootLayout = fxWeaver.loadView(RootLayoutController.class);
 
-        JfxMediaHandApplication.scene = new Scene(this.rootLayout);
-        JfxMediaHandApplication.setDefaultScene();
+        scene = new Scene(this.rootLayout);
+        setDefaultScene();
 
         this.settingsEntry = this.settingsEntryRepository.findByProfile("default");
         if (this.settingsEntry == null) {
-            this.settingsEntry = this.settingsEntryRepository.save(new com.intege.mediahand.domain.SettingsEntry("default", 1200, 800, false, false, null));
+            Rectangle2D screenBounds = Screen.getPrimary().getBounds();
+            this.settingsEntry = this.settingsEntryRepository.save(new com.intege.mediahand.domain.SettingsEntry("default", 1200, 800, false, false, WatchState.ALL, (int) (
+                    screenBounds.getWidth() / 2 - 600), (int) (screenBounds.getHeight() / 2 - 400)));
         }
-        JfxMediaHandApplication.stage.setWidth(this.settingsEntry.getWindowWidth());
-        JfxMediaHandApplication.stage.setHeight(this.settingsEntry.getWindowHeight());
+        stage.setWidth(this.settingsEntry.getWindowWidth());
+        stage.setHeight(this.settingsEntry.getWindowHeight());
+        stage.setX(this.settingsEntry.getWindowPositionX());
+        stage.setY(this.settingsEntry.getWindowPositionY());
 
-        JfxMediaHandApplication.stage.show();
+        stage.show();
     }
 
     private void validateBasePath() {
@@ -118,27 +124,27 @@ public class JfxMediaHandApplication extends Application {
         FxControllerAndView<MediaHandAppController, Node> controllerAndView = fxWeaver.load(MediaHandAppController.class);
         assert controllerAndView.getView().isPresent();
         this.rootLayout.setCenter(controllerAndView.getView().get());
-        JfxMediaHandApplication.mediaHandAppController = controllerAndView.getController();
-        JfxMediaHandApplication.mediaHandAppController.init(); // TODO [lueko]: add scene as parameter and make scene non-static
+        mediaHandAppController = controllerAndView.getController();
+        mediaHandAppController.init(); // TODO [lueko]: add scene as parameter and make scene non-static
     }
 
     private void applyFilterSettings() {
-        JfxMediaHandApplication.mediaHandAppController.autoContinueCheckbox.setSelected(this.settingsEntry.isAutoContinue());
-        JfxMediaHandApplication.mediaHandAppController.showAllCheckbox.setSelected(this.settingsEntry.isShowAll());
-        JfxMediaHandApplication.mediaHandAppController.watchStateFilter.getSelectionModel().select(this.settingsEntry.getWatchStateValue());
-        JfxMediaHandApplication.mediaHandAppController.onFilter();
+        mediaHandAppController.autoContinueCheckbox.setSelected(this.settingsEntry.isAutoContinue());
+        mediaHandAppController.showAllCheckbox.setSelected(this.settingsEntry.isShowAll());
+        mediaHandAppController.watchStateFilter.getSelectionModel().select(this.settingsEntry.getWatchStateValue());
+        mediaHandAppController.onFilter();
     }
 
     public static void setDefaultScene() {
-        JfxMediaHandApplication.stage.setScene(JfxMediaHandApplication.scene);
-        JfxMediaHandApplication.stage.setTitle(JfxMediaHandApplication.MEDIA_HAND_TITLE);
-        if (JfxMediaHandApplication.mediaHandAppController != null) {
-            JfxMediaHandApplication.mediaHandAppController.startControllerListener();
+        stage.setScene(scene);
+        stage.setTitle(MEDIA_HAND_TITLE);
+        if (mediaHandAppController != null) {
+            mediaHandAppController.startControllerListener();
         }
     }
 
     public boolean addBasePath() {
-        Optional<File> baseDir = JfxMediaHandApplication.chooseMediaDirectory();
+        Optional<File> baseDir = chooseMediaDirectory();
 
         if (baseDir.isPresent()) {
             this.mediaLoader.addMedia(this.directoryEntryRepository.save(new DirectoryEntry(baseDir.get().getAbsolutePath())));
@@ -157,7 +163,7 @@ public class JfxMediaHandApplication extends Application {
         if (initialDirPath != null) {
             directoryChooser.setInitialDirectory(initialDirPath.toFile());
         }
-        File dialog = directoryChooser.showDialog(JfxMediaHandApplication.getStage());
+        File dialog = directoryChooser.showDialog(getStage());
 
         return Optional.ofNullable(dialog);
     }
@@ -168,18 +174,18 @@ public class JfxMediaHandApplication extends Application {
      * @return the chosen directory
      */
     public static Optional<File> chooseMediaDirectory() {
-        return JfxMediaHandApplication.chooseMediaDirectory(null);
+        return chooseMediaDirectory(null);
     }
 
     public static MediaHandAppController getMediaHandAppController() {
-        return JfxMediaHandApplication.mediaHandAppController;
+        return mediaHandAppController;
     }
 
     public static Stage getStage() {
-        return JfxMediaHandApplication.stage;
+        return stage;
     }
 
     public static Scene getScene() {
-        return JfxMediaHandApplication.scene;
+        return scene;
     }
 }

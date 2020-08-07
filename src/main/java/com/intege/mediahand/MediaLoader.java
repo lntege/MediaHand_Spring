@@ -12,8 +12,6 @@ import java.util.Optional;
 
 import javax.transaction.Transactional;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -27,16 +25,16 @@ import com.intege.utils.Check;
 
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Loads media into the database.
  *
  * @author Lueko
  */
+@Slf4j
 @Service
 public class MediaLoader {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(MediaLoader.class);
 
     private DirectoryEntry basePath;
 
@@ -90,7 +88,7 @@ public class MediaLoader {
                     }
                 }
             } catch (IOException e) {
-                MediaLoader.LOGGER.warn("Could not add media", e);
+                MediaLoader.log.warn("Could not add media", e);
             }
         }
     }
@@ -164,8 +162,8 @@ public class MediaLoader {
 
     private void updateMediaEntryEpisodes(final MediaEntry newMediaEntry, final MediaEntry mediaEntry) {
         mediaEntry.setEpisodeNumber(newMediaEntry.getEpisodeNumber());
-        if (mediaEntry.getCurrentEpisodeNumber() > mediaEntry.getEpisodeNumber()) {
-            mediaEntry.setCurrentEpisodeNumber(mediaEntry.getEpisodeNumber());
+        if (mediaEntry.getCurrentEpisode() > mediaEntry.getEpisodeNumber()) {
+            mediaEntry.setCurrentEpisode(mediaEntry.getEpisodeNumber());
         }
     }
 
@@ -176,8 +174,8 @@ public class MediaLoader {
         mediaEntry.setPath(newMediaEntry.getPath());
         mediaEntry.setEpisodeNumber(newMediaEntry.getEpisodeNumber());
         mediaEntry.setMediaType(newMediaEntry.getMediaType());
-        if (mediaEntry.getCurrentEpisodeNumber() > mediaEntry.getEpisodeNumber()) {
-            mediaEntry.setCurrentEpisodeNumber(mediaEntry.getEpisodeNumber());
+        if (mediaEntry.getCurrentEpisode() > mediaEntry.getEpisodeNumber()) {
+            mediaEntry.setCurrentEpisode(mediaEntry.getEpisodeNumber());
         }
         MediaHandAppController.triggerMediaEntryUpdate(mediaEntry);
     }
