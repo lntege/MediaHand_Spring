@@ -20,6 +20,7 @@ import com.intege.mediahand.domain.repository.MediaEntryRepository;
 import com.intege.mediahand.utils.MessageUtil;
 import com.intege.mediahand.vlc.ControlPane;
 import com.intege.mediahand.vlc.JavaFxMediaPlayer;
+import com.intege.mediahand.vlc.JavaFxMediaTeaser;
 import com.intege.mediahand.vlc.MediaPlayerContextMenu;
 import com.intege.mediahand.vlc.event.StopRenderingSceneHandler;
 import com.studiohartman.jamepad.ControllerButton;
@@ -97,6 +98,12 @@ public class MediaHandAppController {
     @FXML
     public TableColumn<MediaEntry, String> title;
 
+    @FXML
+    public JavaFxMediaTeaser mediaTeaser;
+
+    @FXML
+    public CheckBox playTeaser;
+
     private ControllerIndex currentController;
 
     private boolean isRunning;
@@ -150,6 +157,24 @@ public class MediaHandAppController {
                 }
                 this.episodeEdit.getSelectionModel().select(newValue.getCurrentEpisode() - 1);
                 this.watchedEdit.setValue(newValue.getWatchedDate());
+                if (newValue.isAvailable()) {
+                    try {
+                        if (this.mediaTeaser.start(this.mediaLoader.getEpisode(newValue.getAbsolutePath(), newValue.getCurrentEpisode()))) {
+                            this.mediaTeaser.setVisible(true);
+                            this.mediaTeaser.getEmbeddedMediaPlayer().audio().setTrack(-1);
+                            if (!this.playTeaser.isSelected()) {
+                                Thread.sleep(30);
+                                this.mediaTeaser.pause();
+                            }
+                        }
+                    } catch (IOException | InterruptedException e) {
+                        this.mediaTeaser.pause();
+                        this.mediaTeaser.setVisible(false);
+                    }
+                } else {
+                    this.mediaTeaser.pause();
+                    this.mediaTeaser.setVisible(false);
+                }
             } else {
                 this.selectedMediaTitle.setText("Selected media");
                 this.selectedMediaTitle.setTooltip(new Tooltip("Selected media"));
@@ -185,6 +210,24 @@ public class MediaHandAppController {
                 selectedItem.setWatchedDate(newValue);
                 this.mediaEntryRepository.save(selectedItem);
                 MediaHandAppController.triggerMediaEntryUpdate(selectedItem);
+            }
+        });
+        this.playTeaser.selectedProperty().addListener((observable, oldValue, newValue) -> {
+            MediaEntry selectedItem = this.mediaTableView.getSelectionModel().getSelectedItem();
+
+            try {
+                if (selectedItem != null && selectedItem.isAvailable()
+                        && this.mediaTeaser.start(this.mediaLoader.getEpisode(selectedItem.getAbsolutePath(), selectedItem.getCurrentEpisode()))) {
+                    this.mediaTeaser.setVisible(true);
+                    this.mediaTeaser.getEmbeddedMediaPlayer().audio().setTrack(-1);
+                    if (!newValue) {
+                        Thread.sleep(50);
+                        this.mediaTeaser.pause();
+                    }
+                }
+            } catch (IOException | InterruptedException e) {
+                this.mediaTeaser.pause();
+                this.mediaTeaser.setVisible(false);
             }
         });
         fillTableView(this.mediaEntryRepository.findAll());
@@ -318,6 +361,8 @@ public class MediaHandAppController {
                 this.jfxMediaHandApplication.getStage().setScene(this.javaFxMediaPlayer.getScene());
 
                 if (this.javaFxMediaPlayer.start(file)) {
+                    this.mediaTeaser.pause();
+                    this.mediaTeaser.setVisible(false);
                     this.controlPane.update(selectedItem);
                     this.mediaPlayerContextMenu.update(selectedItem);
                 } else {
@@ -344,7 +389,7 @@ public class MediaHandAppController {
         this.controlPane = new ControlPane(this.javaFxMediaPlayer.getEmbeddedMediaPlayer(), this.jfxMediaHandApplication, this.javaFxMediaPlayer.getScene(), this.mediaEntryRepository);
         stackPane.getChildren().add(this.controlPane.getBorderPane());
 
-        this.jfxMediaHandApplication.getStage().setOnCloseRequest(new StopRenderingSceneHandler(List.of(this.controlPane, this.javaFxMediaPlayer)));
+        this.jfxMediaHandApplication.getStage().setOnCloseRequest(new StopRenderingSceneHandler(List.of(this.controlPane, this.javaFxMediaPlayer, this.mediaTeaser)));
         this.jfxMediaHandApplication.getStage().setFullScreenExitKeyCombination(new KeyCodeCombination(KeyCode.F, KeyCombination.CONTROL_DOWN));
     }
 
@@ -361,6 +406,8 @@ public class MediaHandAppController {
                 File file = this.mediaLoader.getEpisode(selectedItem.getAbsolutePath(), selectedItem.getCurrentEpisode());
                 try {
                     desktop.open(file);
+                    this.mediaTeaser.pause();
+                    this.mediaTeaser.setVisible(false);
                 } catch (IOException e) {
                     MessageUtil.warningAlert(e);
                 }

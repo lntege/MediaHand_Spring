@@ -109,8 +109,8 @@ public class JfxMediaHandApplication extends Application {
         this.settingsEntry = this.settingsEntryRepository.findByProfile("default");
         if (this.settingsEntry == null) {
             Rectangle2D screenBounds = Screen.getPrimary().getBounds();
-            this.settingsEntry = this.settingsEntryRepository.save(new com.intege.mediahand.domain.SettingsEntry("default", 1200, 800, false, false, WatchState.ALL, (int) (
-                    screenBounds.getWidth() / 2 - 600), (int) (screenBounds.getHeight() / 2 - 400)));
+            this.settingsEntry = this.settingsEntryRepository.save(new SettingsEntry("default", 1200, 800, false, false, WatchState.ALL, (int) (screenBounds.getWidth() / 2
+                    - 600), (int) (screenBounds.getHeight() / 2 - 400)));
         }
         this.stage.setWidth(this.settingsEntry.getWindowWidth());
         this.stage.setHeight(this.settingsEntry.getWindowHeight());

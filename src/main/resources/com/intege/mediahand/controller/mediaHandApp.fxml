@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import com.intege.mediahand.vlc.JavaFxMediaTeaser?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.cell.PropertyValueFactory?>
 <?import javafx.scene.control.CheckBox?>
@@ -12,7 +13,7 @@
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.shape.Line?>
-<BorderPane xmlns="http://javafx.com/javafx/10.0.2-internal" xmlns:fx="http://javafx.com/fxml/1"
+<BorderPane xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1"
 			fx:controller="com.intege.mediahand.controller.MediaHandAppController">
 	<right>
 		<AnchorPane prefHeight="436.0" prefWidth="174.0" BorderPane.alignment="CENTER">
@@ -45,10 +46,13 @@
 			<Button layoutX="129.0" layoutY="214.0" mnemonicParsing="false" onAction="#increaseWatched"
 					prefHeight="25.0" prefWidth="25.0" text="+"/>
 			<Label layoutX="30.0" layoutY="218.0" text="#Watched"/>
+			<JavaFxMediaTeaser fx:id="mediaTeaser" layoutY="550.0" prefHeight="200.0" prefWidth="250.0"/>
+			<CheckBox fx:id="playTeaser" layoutX="3.0" layoutY="500.0" mnemonicParsing="false" text="Play teaser"/>
 		</AnchorPane>
 	</right>
 	<center>
-		<TableView fx:id="mediaTableView" onKeyPressed="#onPlayEnter" BorderPane.alignment="CENTER">
+		<TableView fx:id="mediaTableView" onKeyPressed="#onPlayEnter" prefHeight="764.0" prefWidth="722.0"
+				   BorderPane.alignment="CENTER">
 			<columns>
 				<TableColumn fx:id="title" prefWidth="${mediaTableView.width * 0.3}" text="Title">
 					<cellValueFactory>

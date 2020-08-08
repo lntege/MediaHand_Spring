@@ -54,13 +54,13 @@ public class JavaFxMediaPlayer implements MediaPlayerComponent {
         return this.embeddedMediaPlayer.media().start(media.getAbsolutePath());
     }
 
+    @Override
     public void stop() {
         this.embeddedMediaPlayer.release();
         this.mediaPlayerFactory.release();
     }
 
     private StackPane buildStackPane() {
-
         StackPane stackPane = new StackPane();
 
         this.imageView.fitWidthProperty().bind(stackPane.widthProperty());
