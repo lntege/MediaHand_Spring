@@ -23,6 +23,7 @@ import javafx.application.Platform;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Node;
 import javafx.scene.Scene;
+import javafx.scene.image.Image;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.Screen;
@@ -67,6 +68,8 @@ public class JfxMediaHandApplication extends Application {
     @Override
     public void start(Stage stage) {
         this.stage = stage;
+        Image icon = new Image("/video.png");
+        this.stage.getIcons().add(icon);
         this.mediaLoader = new MediaLoader();
 
         validateBasePath();
