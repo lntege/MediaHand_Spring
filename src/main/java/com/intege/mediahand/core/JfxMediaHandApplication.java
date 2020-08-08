@@ -93,6 +93,7 @@ public class JfxMediaHandApplication extends Application {
         this.settingsEntry.setAutoContinue(this.mediaHandAppController.autoContinueCheckbox.isSelected());
         this.settingsEntry.setShowAll(this.mediaHandAppController.showAllCheckbox.isSelected());
         this.settingsEntry.setWatchState(WatchState.lookupByName(this.mediaHandAppController.watchStateFilter.getSelectionModel().getSelectedItem()));
+        this.settingsEntry.setPlayTeaser(this.mediaHandAppController.playTeaser.isSelected());
         this.settingsEntryRepository.save(this.settingsEntry);
 
         this.applicationContext.close();
@@ -110,7 +111,7 @@ public class JfxMediaHandApplication extends Application {
         if (this.settingsEntry == null) {
             Rectangle2D screenBounds = Screen.getPrimary().getBounds();
             this.settingsEntry = this.settingsEntryRepository.save(new SettingsEntry("default", 1200, 800, false, false, WatchState.ALL, (int) (screenBounds.getWidth() / 2
-                    - 600), (int) (screenBounds.getHeight() / 2 - 400)));
+                    - 600), (int) (screenBounds.getHeight() / 2 - 400), false));
         }
         this.stage.setWidth(this.settingsEntry.getWindowWidth());
         this.stage.setHeight(this.settingsEntry.getWindowHeight());
@@ -133,6 +134,7 @@ public class JfxMediaHandApplication extends Application {
         this.rootLayout.setCenter(controllerAndView.getView().get());
         this.mediaHandAppController = controllerAndView.getController();
         this.mediaHandAppController.init();
+        this.mediaHandAppController.playTeaser.setSelected(this.settingsEntry.isPlayTeaser());
     }
 
     private void applyFilterSettings() {

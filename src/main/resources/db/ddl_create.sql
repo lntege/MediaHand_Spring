@@ -29,6 +29,7 @@ create sequence hibernate_sequence start with 1 increment by 1
     create table SettingsEntry (
        id integer not null,
         autoContinue boolean not null,
+        playTeaser boolean not null,
         profile varchar(255),
         showAll boolean not null,
         watchState varchar(255),

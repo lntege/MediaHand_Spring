@@ -41,11 +41,13 @@ class SettingsEntry {
 
     private int windowPositionY;
 
+    private boolean playTeaser;
+
     SettingsEntry() {
     }
 
-    public SettingsEntry(String profile, int windowWidth, int windowHeight, boolean autoContinue, boolean showAll, WatchState watchState, int windowPositionX,
-                         int windowPositionY) {
+    public SettingsEntry(String profile, int windowWidth, int windowHeight, boolean autoContinue, boolean showAll, WatchState watchState, int windowPositionX, int windowPositionY,
+                         boolean playTeaser) {
         Check.notNullArgument(profile, "profile");
 
         this.profile = profile;
@@ -56,6 +58,7 @@ class SettingsEntry {
         this.watchState = watchState;
         this.windowPositionX = windowPositionX;
         this.windowPositionY = windowPositionY;
+        this.playTeaser = playTeaser;
     }
 
     public String getWatchStateValue() {
