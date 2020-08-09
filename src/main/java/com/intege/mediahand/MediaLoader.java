@@ -185,7 +185,7 @@ public class MediaLoader {
         MediaHandAppController.triggerMediaEntryUpdate(mediaEntry);
     }
 
-    public File getEpisode(final String absolutePath, final int episode) throws IOException {
+    public static File getEpisode(final String absolutePath, final int episode) throws IOException {
         File dir = new File(absolutePath);
         if (dir.isDirectory()) {
             File[] files = dir.listFiles((dir2, name) -> isMedia(name));
@@ -203,7 +203,7 @@ public class MediaLoader {
         return Objects.requireNonNull(dir.listFiles((dir1, name) -> isMedia(name))).length;
     }
 
-    private boolean isMedia(final String name) {
+    private static boolean isMedia(final String name) {
         return name.contains(".mkv") || name.contains(".mp4") || name.contains(".flv");
     }
 

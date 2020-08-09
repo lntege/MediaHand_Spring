@@ -3,10 +3,13 @@ package com.intege.mediahand.controller;
 import java.awt.Desktop;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Stack;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -23,6 +26,7 @@ import com.intege.mediahand.vlc.JavaFxMediaPlayer;
 import com.intege.mediahand.vlc.JavaFxMediaTeaser;
 import com.intege.mediahand.vlc.MediaPlayerContextMenu;
 import com.intege.mediahand.vlc.event.StopRenderingSceneHandler;
+import com.intege.utils.PipeStream;
 import com.studiohartman.jamepad.ControllerButton;
 import com.studiohartman.jamepad.ControllerIndex;
 import com.studiohartman.jamepad.ControllerManager;
@@ -43,6 +47,7 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.control.Tooltip;
+import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.input.KeyCombination;
@@ -57,6 +62,10 @@ import uk.co.caprica.vlcj.player.base.MediaPlayerEventAdapter;
 @Component
 @FxmlView("mediaHandApp.fxml")
 public class MediaHandAppController {
+
+    public static final String THUMBNAIL_FILE_TYPE = ".jpg";
+    public static final String THUMBNAILS_FOLDER = "\\thumbnails\\";
+    public static final int MIN_THUMBNAIL_SIZE_IN_BYTES = 20000;
 
     @FXML
     public TableView<MediaEntry> mediaTableView;
@@ -122,7 +131,12 @@ public class MediaHandAppController {
     @Autowired
     private JfxMediaHandApplication jfxMediaHandApplication;
 
+    private Thread thread;
+
+    private Stack<Integer> updateMediaTeaserStack;
+
     public void init() {
+        this.updateMediaTeaserStack = new Stack<>();
         initMediaPlayer();
 
         startControllerListener();
@@ -158,22 +172,31 @@ public class MediaHandAppController {
                 this.episodeEdit.getSelectionModel().select(newValue.getCurrentEpisode() - 1);
                 this.watchedEdit.setValue(newValue.getWatchedDate());
                 if (newValue.isAvailable()) {
-                    try {
-                        if (this.mediaTeaser.start(this.mediaLoader.getEpisode(newValue.getAbsolutePath(), newValue.getCurrentEpisode()))) {
-                            this.mediaTeaser.setVisible(true);
-                            this.mediaTeaser.getEmbeddedMediaPlayer().audio().setTrack(-1);
-                            if (!this.playTeaser.isSelected()) {
-                                Thread.sleep(30);
-                                this.mediaTeaser.pause();
-                            }
-                        }
-                    } catch (IOException | InterruptedException e) {
+                    if (Files.exists(Path.of(newValue.getAbsolutePath() + THUMBNAILS_FOLDER + newValue.getCurrentEpisode() + THUMBNAIL_FILE_TYPE))) {
+                        this.mediaTeaser.getThumbnailView().setImage(new Image(
+                                "file:" + newValue.getAbsolutePath() + THUMBNAILS_FOLDER + newValue.getCurrentEpisode() + THUMBNAIL_FILE_TYPE));
+                        this.mediaTeaser.switchImageView(false);
                         this.mediaTeaser.pause();
-                        this.mediaTeaser.setVisible(false);
+                    }
+                    Runnable runnable = () -> {
+                        this.updateMediaTeaserStack.push(0);
+                        while (!this.updateMediaTeaserStack.empty()) {
+                            updateMediaTeaser();
+                            this.updateMediaTeaserStack.pop();
+                        }
+                    };
+                    if (this.thread != null && this.thread.isAlive()) {
+                        if (this.updateMediaTeaserStack.size() < 2) {
+                            this.updateMediaTeaserStack.push(0);
+                        }
+                    } else {
+                        this.thread = new Thread(runnable);
+                        this.thread.start();
                     }
                 } else {
                     this.mediaTeaser.pause();
-                    this.mediaTeaser.setVisible(false);
+                    this.mediaTeaser.switchImageView(false);
+                    this.mediaTeaser.getThumbnailView().setVisible(false);
                 }
             } else {
                 this.selectedMediaTitle.setText("Selected media");
@@ -213,24 +236,127 @@ public class MediaHandAppController {
             }
         });
         this.playTeaser.selectedProperty().addListener((observable, oldValue, newValue) -> {
-            MediaEntry selectedItem = this.mediaTableView.getSelectionModel().getSelectedItem();
-
-            try {
-                if (selectedItem != null && selectedItem.isAvailable()
-                        && this.mediaTeaser.start(this.mediaLoader.getEpisode(selectedItem.getAbsolutePath(), selectedItem.getCurrentEpisode()))) {
-                    this.mediaTeaser.setVisible(true);
-                    this.mediaTeaser.getEmbeddedMediaPlayer().audio().setTrack(-1);
-                    if (!newValue) {
-                        Thread.sleep(50);
-                        this.mediaTeaser.pause();
-                    }
-                }
-            } catch (IOException | InterruptedException e) {
+            MediaEntry mediaEntry = this.mediaTableView.getSelectionModel().getSelectedItem();
+            if (mediaEntry != null && Files.exists(Path.of(mediaEntry.getAbsolutePath() + THUMBNAILS_FOLDER + mediaEntry.getCurrentEpisode() + THUMBNAIL_FILE_TYPE))) {
+                this.mediaTeaser.getThumbnailView().setImage(new Image(
+                        "file:" + mediaEntry.getAbsolutePath() + THUMBNAILS_FOLDER + mediaEntry.getCurrentEpisode() + THUMBNAIL_FILE_TYPE));
+                this.mediaTeaser.switchImageView(false);
                 this.mediaTeaser.pause();
-                this.mediaTeaser.setVisible(false);
+            }
+            Runnable runnable = () -> {
+                this.updateMediaTeaserStack.push(0);
+                while (!this.updateMediaTeaserStack.empty()) {
+                    updateMediaTeaser();
+                    this.updateMediaTeaserStack.pop();
+                }
+            };
+            if (this.thread != null && this.thread.isAlive()) {
+                if (this.updateMediaTeaserStack.size() < 2) {
+                    this.updateMediaTeaserStack.push(0);
+                }
+            } else {
+                this.thread = new Thread(runnable);
+                this.thread.start();
             }
         });
         fillTableView(this.mediaEntryRepository.findAll());
+    }
+
+    private void updateMediaTeaser() {
+        MediaEntry mediaEntry = this.mediaTableView.getSelectionModel().getSelectedItem();
+
+        if (mediaEntry == null) {
+            return;
+        }
+
+        if (Files.notExists(Path.of(mediaEntry.getAbsolutePath() + THUMBNAILS_FOLDER))) {
+            try {
+                Files.createDirectory(Path.of(mediaEntry.getAbsolutePath() + THUMBNAILS_FOLDER));
+            } catch (IOException e) {
+                log.error("Could not create thumbnails directory", e);
+            }
+        }
+        if (mediaEntry.isAvailable()) {
+            if (!this.playTeaser.isSelected()) {
+                checkThumbnailForEpisode(mediaEntry.getCurrentEpisode(), mediaEntry);
+                this.mediaTeaser.pause();
+                this.mediaTeaser.switchImageView(false);
+            } else {
+                this.mediaTeaser.switchImageView(true);
+                try {
+                    if (this.mediaTeaser.start(MediaLoader.getEpisode(mediaEntry.getAbsolutePath(), mediaEntry.getCurrentEpisode()))) {
+                        this.mediaTeaser.getEmbeddedMediaPlayer().audio().setTrack(-1);
+                        if (!this.playTeaser.isSelected()) {
+                            try {
+                                Thread.sleep(30);
+                            } catch (InterruptedException e) {
+                                this.mediaTeaser.switchImageView(false);
+                            }
+                            this.mediaTeaser.pause();
+                        }
+                    }
+                } catch (IOException e) {
+                    this.mediaTeaser.pause();
+                    this.mediaTeaser.switchImageView(false);
+                }
+                checkThumbnailForEpisode(mediaEntry.getCurrentEpisode(), mediaEntry);
+            }
+            if (mediaEntry.equals(this.mediaTableView.getSelectionModel().getSelectedItem())) {
+                this.mediaTeaser.getThumbnailView().setImage(new Image(
+                        "file:" + mediaEntry.getAbsolutePath() + THUMBNAILS_FOLDER + mediaEntry.getCurrentEpisode() + THUMBNAIL_FILE_TYPE));
+            }
+        }
+    }
+
+    private boolean checkThumbnailForEpisode(final int episodeIndex, final MediaEntry mediaEntry) {
+        try {
+            File episode = MediaLoader.getEpisode(mediaEntry.getAbsolutePath(), episodeIndex);
+            if (Files.notExists(Path.of(mediaEntry.getAbsolutePath() + THUMBNAILS_FOLDER + episodeIndex + THUMBNAIL_FILE_TYPE))) {
+                this.mediaTeaser.getThumbnailView().setVisible(false);
+                return generateThumbnail(episode, mediaEntry, episodeIndex, 3);
+            }
+        } catch (IOException | InterruptedException e) {
+            log.error("Could not check thumbnail", e);
+        }
+        return true;
+    }
+
+    private boolean generateThumbnail(final File episode, final MediaEntry mediaEntry, final int episodeIndex, final int timeInSeconds) throws IOException, InterruptedException {
+        String episodePath = episode.getAbsolutePath();
+        String command = String.format("ffmpeg -ss %d -i \"%s\" -qscale:v 2 -vf \"select=gt(scene\\,0.5)\" -frames:v 3 -vsync vfr \"%s%s%s%d%s"
+                + "\"", timeInSeconds, episodePath, mediaEntry.getAbsolutePath(), THUMBNAILS_FOLDER, "version_%02d_", episodeIndex, THUMBNAIL_FILE_TYPE);
+        Process process = Runtime.getRuntime().exec("cmd /c " + command);
+
+        PipeStream out = new PipeStream(process.getInputStream(), System.out);
+        PipeStream in = new PipeStream(process.getErrorStream(), System.err);
+        out.start();
+        in.start();
+
+        int exitVal = process.waitFor();
+        if (exitVal == 0) {
+            long size = 0;
+            Path thumbnail = null;
+            for (int i = 1; i <= 3; i++) {
+                Path tmpThumbnail = Path.of(mediaEntry.getAbsolutePath() + THUMBNAILS_FOLDER + "version_0" + i + "_" + episodeIndex + THUMBNAIL_FILE_TYPE);
+                if (Files.size(tmpThumbnail) > size) {
+                    size = Files.size(tmpThumbnail);
+                    if (thumbnail != null) {
+                        Files.delete(thumbnail);
+                    }
+                    thumbnail = tmpThumbnail;
+                } else {
+                    Files.delete(tmpThumbnail);
+                }
+            }
+            assert thumbnail != null;
+            File file = thumbnail.toFile();
+            file.renameTo(new File(file.getAbsolutePath().replace(file.getName(), episodeIndex + THUMBNAIL_FILE_TYPE)));
+
+            return true;
+        } else {
+            log.error("Could not generate thumbnail for " + episodePath + ". Exit value is: " + exitVal);
+            return false;
+        }
     }
 
     public void onMediaFinished() {
@@ -352,7 +478,7 @@ public class MediaHandAppController {
                     "Play media: " + selectedItem.getAbsolutePath(), "Selected media is not available. Deselect 'Show All' to show only media of connected media directories.");
         } else {
             try {
-                File file = this.mediaLoader.getEpisode(selectedItem.getAbsolutePath(), selectedItem.getCurrentEpisode());
+                File file = MediaLoader.getEpisode(selectedItem.getAbsolutePath(), selectedItem.getCurrentEpisode());
 
                 String windowTitle = selectedItem.getTitle() + " : Episode " + selectedItem.getCurrentEpisode();
                 this.isRunning = false;
@@ -362,7 +488,7 @@ public class MediaHandAppController {
 
                 if (this.javaFxMediaPlayer.start(file)) {
                     this.mediaTeaser.pause();
-                    this.mediaTeaser.setVisible(false);
+                    this.mediaTeaser.switchImageView(false);
                     this.controlPane.update(selectedItem);
                     this.mediaPlayerContextMenu.update(selectedItem);
                 } else {
@@ -403,11 +529,11 @@ public class MediaHandAppController {
         } else {
             Desktop desktop = Desktop.getDesktop();
             try {
-                File file = this.mediaLoader.getEpisode(selectedItem.getAbsolutePath(), selectedItem.getCurrentEpisode());
+                File file = MediaLoader.getEpisode(selectedItem.getAbsolutePath(), selectedItem.getCurrentEpisode());
                 try {
                     desktop.open(file);
                     this.mediaTeaser.pause();
-                    this.mediaTeaser.setVisible(false);
+                    this.mediaTeaser.switchImageView(false);
                 } catch (IOException e) {
                     MessageUtil.warningAlert(e);
                 }

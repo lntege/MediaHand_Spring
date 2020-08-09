@@ -14,19 +14,30 @@ public class JavaFxMediaTeaser extends StackPane implements MediaPlayerComponent
 
     private final EmbeddedMediaPlayer embeddedMediaPlayer;
 
+    private final ImageView thumbnailView;
+
+    private final ImageView videoView;
+
     public JavaFxMediaTeaser() {
         super();
 
         this.mediaPlayerFactory = new MediaPlayerFactory();
         this.embeddedMediaPlayer = this.mediaPlayerFactory.mediaPlayers().newEmbeddedMediaPlayer();
-        ImageView imageView = new ImageView();
-        imageView.setPreserveRatio(true);
-        this.embeddedMediaPlayer.videoSurface().set(ImageViewVideoSurfaceFactory.videoSurfaceForImageView(imageView));
+        this.thumbnailView = new ImageView();
+        this.thumbnailView.setVisible(false);
+        this.thumbnailView.setPreserveRatio(true);
+        this.videoView = new ImageView();
+        this.videoView.setPreserveRatio(true);
+        this.embeddedMediaPlayer.videoSurface().set(ImageViewVideoSurfaceFactory.videoSurfaceForImageView(this.videoView));
 
-        imageView.fitWidthProperty().bind(widthProperty());
-        imageView.fitHeightProperty().bind(heightProperty());
+        this.videoView.fitWidthProperty().bind(widthProperty());
+        this.videoView.fitHeightProperty().bind(heightProperty());
 
-        getChildren().add(imageView);
+        this.thumbnailView.fitWidthProperty().bind(widthProperty());
+        this.thumbnailView.fitHeightProperty().bind(heightProperty());
+
+        getChildren().add(this.videoView);
+        getChildren().add(this.thumbnailView);
     }
 
     public boolean start(final File media) {
@@ -48,4 +59,19 @@ public class JavaFxMediaTeaser extends StackPane implements MediaPlayerComponent
     public EmbeddedMediaPlayer getEmbeddedMediaPlayer() {
         return this.embeddedMediaPlayer;
     }
+
+    public ImageView getThumbnailView() {
+        return this.thumbnailView;
+    }
+
+    public void switchImageView(final boolean playTeaser) {
+        if (playTeaser) {
+            this.videoView.setVisible(true);
+            this.thumbnailView.setVisible(false);
+        } else {
+            this.videoView.setVisible(false);
+            this.thumbnailView.setVisible(true);
+        }
+    }
+
 }
