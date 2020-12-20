@@ -43,7 +43,7 @@ class SettingsEntry {
 
     private boolean playTeaser;
 
-    SettingsEntry() {
+    protected SettingsEntry() {
     }
 
     public SettingsEntry(String profile, int windowWidth, int windowHeight, boolean autoContinue, boolean showAll, WatchState watchState, int windowPositionX, int windowPositionY,

@@ -119,7 +119,7 @@ class MediaEntry {
     @Transient
     private boolean available;
 
-    MediaEntry() {
+    protected MediaEntry() {
     }
 
     @PostLoad

@@ -21,7 +21,7 @@ class DirectoryEntry {
     @Column(unique = true)
     private String path;
 
-    DirectoryEntry() {
+    protected DirectoryEntry() {
     }
 
     public DirectoryEntry(String path) {

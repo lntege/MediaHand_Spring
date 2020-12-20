@@ -28,9 +28,11 @@ import javafx.scene.layout.BorderPane;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
+import lombok.extern.slf4j.Slf4j;
 import net.rgielen.fxweaver.core.FxControllerAndView;
 import net.rgielen.fxweaver.core.FxWeaver;
 
+@Slf4j
 public class JfxMediaHandApplication extends Application {
 
     public static final String MEDIA_HAND_TITLE = "Media Hand";
@@ -96,6 +98,17 @@ public class JfxMediaHandApplication extends Application {
         this.settingsEntry.setPlayTeaser(this.mediaHandAppController.playTeaser.isSelected());
         this.settingsEntryRepository.save(this.settingsEntry);
 
+        try {
+            if (this.mediaHandAppController.getCheckAllThumbnailsThread() != null) {
+                this.mediaHandAppController.getCheckAllThumbnailsThread().join();
+            }
+            if (this.mediaHandAppController.getCheckThumbnailOnRequestThread() != null) {
+                this.mediaHandAppController.getCheckThumbnailOnRequestThread().join();
+            }
+        } catch (InterruptedException e) {
+            log.error("Could not wait for check thumbnail thread to finish", e);
+        }
+
         this.applicationContext.close();
         Platform.exit();
     }
@@ -110,8 +123,7 @@ public class JfxMediaHandApplication extends Application {
         this.settingsEntry = this.settingsEntryRepository.findByProfile("default");
         if (this.settingsEntry == null) {
             Rectangle2D screenBounds = Screen.getPrimary().getBounds();
-            this.settingsEntry = this.settingsEntryRepository.save(new SettingsEntry("default", 1200, 800, false, false, WatchState.ALL, (int) (screenBounds.getWidth() / 2
-                    - 600), (int) (screenBounds.getHeight() / 2 - 400), false));
+            this.settingsEntry = this.settingsEntryRepository.save(new SettingsEntry("default", 1200, 800, false, false, WatchState.ALL, (int) (screenBounds.getWidth() / 2 - 600), (int) (screenBounds.getHeight() / 2 - 400), false));
         }
         this.stage.setWidth(this.settingsEntry.getWindowWidth());
         this.stage.setHeight(this.settingsEntry.getWindowHeight());

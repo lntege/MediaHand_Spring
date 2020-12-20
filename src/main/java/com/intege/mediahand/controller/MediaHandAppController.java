@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Stack;
+import java.util.concurrent.TimeUnit;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -131,9 +132,11 @@ public class MediaHandAppController {
     @Autowired
     private JfxMediaHandApplication jfxMediaHandApplication;
 
-    private Thread thread;
+    private Thread checkThumbnailOnRequestThread;
 
     private Stack<Integer> updateMediaTeaserStack;
+
+    private Thread checkAllThumbnailsThread;
 
     public void init() {
         this.updateMediaTeaserStack = new Stack<>();
@@ -185,13 +188,13 @@ public class MediaHandAppController {
                             this.updateMediaTeaserStack.pop();
                         }
                     };
-                    if (this.thread != null && this.thread.isAlive()) {
+                    if (this.checkThumbnailOnRequestThread != null && this.checkThumbnailOnRequestThread.isAlive()) {
                         if (this.updateMediaTeaserStack.size() < 2) {
                             this.updateMediaTeaserStack.push(0);
                         }
                     } else {
-                        this.thread = new Thread(runnable);
-                        this.thread.start();
+                        this.checkThumbnailOnRequestThread = new Thread(runnable);
+                        this.checkThumbnailOnRequestThread.start();
                     }
                 } else {
                     this.mediaTeaser.pause();
@@ -250,16 +253,28 @@ public class MediaHandAppController {
                     this.updateMediaTeaserStack.pop();
                 }
             };
-            if (this.thread != null && this.thread.isAlive()) {
+            if (this.checkThumbnailOnRequestThread != null && this.checkThumbnailOnRequestThread.isAlive()) {
                 if (this.updateMediaTeaserStack.size() < 2) {
                     this.updateMediaTeaserStack.push(0);
                 }
             } else {
-                this.thread = new Thread(runnable);
-                this.thread.start();
+                this.checkThumbnailOnRequestThread = new Thread(runnable);
+                this.checkThumbnailOnRequestThread.start();
             }
         });
-        fillTableView(this.mediaEntryRepository.findAll());
+        List<MediaEntry> mediaEntries = this.mediaEntryRepository.findAll();
+        Runnable runnable = () -> {
+            for (MediaEntry mediaEntry : mediaEntries) {
+                if (mediaEntry.isAvailable()) {
+                    for (int i = 1; i <= mediaEntry.getEpisodeNumber(); i++) {
+                        checkThumbnailForEpisode(i, mediaEntry);
+                    }
+                }
+            }
+        };
+        this.checkAllThumbnailsThread = new Thread(runnable);
+        this.checkAllThumbnailsThread.start();
+        fillTableView(mediaEntries);
     }
 
     private void updateMediaTeaser() {
@@ -312,7 +327,9 @@ public class MediaHandAppController {
         try {
             File episode = MediaLoader.getEpisode(mediaEntry.getAbsolutePath(), episodeIndex);
             if (Files.notExists(Path.of(mediaEntry.getAbsolutePath() + THUMBNAILS_FOLDER + episodeIndex + THUMBNAIL_FILE_TYPE))) {
-                this.mediaTeaser.getThumbnailView().setVisible(false);
+                if (mediaEntry.equals(this.mediaTableView.getSelectionModel().getSelectedItem()) && episodeIndex == mediaEntry.getCurrentEpisode()) {
+                    this.mediaTeaser.getThumbnailView().setVisible(false);
+                }
                 return generateThumbnail(episode, mediaEntry, episodeIndex, 3);
             }
         } catch (IOException | InterruptedException e) {
@@ -332,8 +349,8 @@ public class MediaHandAppController {
         out.start();
         in.start();
 
-        int exitVal = process.waitFor();
-        if (exitVal == 0) {
+        boolean exitVal = process.waitFor(5000, TimeUnit.MILLISECONDS);
+        if (exitVal) {
             long size = 0;
             Path thumbnail = null;
             for (int i = 1; i <= 3; i++) {
@@ -350,11 +367,18 @@ public class MediaHandAppController {
             }
             assert thumbnail != null;
             File file = thumbnail.toFile();
-            file.renameTo(new File(file.getAbsolutePath().replace(file.getName(), episodeIndex + THUMBNAIL_FILE_TYPE)));
+            if (!file.renameTo(new File(file.getAbsolutePath().replace(file.getName(), episodeIndex + THUMBNAIL_FILE_TYPE)))) {
+                Files.delete(Path.of(file.getAbsolutePath().replace(file.getName(), episodeIndex + THUMBNAIL_FILE_TYPE)));
+                if (!file.renameTo(new File(file.getAbsolutePath().replace(file.getName(), episodeIndex + THUMBNAIL_FILE_TYPE)))) {
+                    Files.delete(file.toPath());
+                    log.error("Could not rename thumbnail for " + episodePath);
+                    return false;
+                }
+            }
 
             return true;
         } else {
-            log.error("Could not generate thumbnail for " + episodePath + ". Exit value is: " + exitVal);
+            log.error("Could not generate thumbnail for " + episodePath);
             return false;
         }
     }
@@ -587,6 +611,14 @@ public class MediaHandAppController {
 
     public MediaEntry getSelectedMediaEntry() {
         return this.mediaTableView.getSelectionModel().getSelectedItem();
+    }
+
+    public Thread getCheckThumbnailOnRequestThread() {
+        return this.checkThumbnailOnRequestThread;
+    }
+
+    public Thread getCheckAllThumbnailsThread() {
+        return this.checkAllThumbnailsThread;
     }
 
     public void onFilter() {
