@@ -148,7 +148,26 @@ public class MediaHandAppController {
         startControllerListener();
         addWatchStateFilter();
         addMediaTypeFilter();
+        addTitleTooltip();
+        addWatchStateEditValues();
+        addRatingEditValues();
+        addAllListeners();
+        List<MediaEntry> mediaEntries = this.mediaEntryRepository.findAll();
+        initThumbnailGeneration(mediaEntries);
+        fillTableView(mediaEntries);
+    }
+
+    private void addAllListeners() {
         addTitleFieldFilterListener();
+        addMediaTableViewListener();
+        addRatingEditListener();
+        addEpisodeEditListener();
+        addWatchStateListener();
+        addWatchedEditListener();
+        addPlayTeaserListener();
+    }
+
+    private void addTitleTooltip() {
         this.title.setCellFactory(column -> new TableCell<>() {
             @Override
             protected void updateItem(String item, boolean empty) {
@@ -159,8 +178,102 @@ public class MediaHandAppController {
                 }
             }
         });
+    }
+
+    private void addWatchStateEditValues() {
         this.watchStateEdit.setItems(FXCollections.observableArrayList(WatchState.WANT_TO_WATCH.toString(), WatchState.DOWNLOADING.toString(), WatchState.WATCHED.toString(), WatchState.WATCHING.toString(), WatchState.REWATCHING.toString()));
+    }
+
+    private void addRatingEditValues() {
         this.ratingEdit.setItems(FXCollections.observableArrayList(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10));
+    }
+
+    private void addRatingEditListener() {
+        this.ratingEdit.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+            MediaEntry selectedItem = this.mediaTableView.getSelectionModel().getSelectedItem();
+            if (selectedItem != null && newValue != null && selectedItem.getRating() != newValue) {
+                selectedItem.setRating(newValue);
+                this.mediaEntryRepository.save(selectedItem);
+                MediaHandAppController.triggerMediaEntryUpdate(selectedItem);
+            }
+        });
+    }
+
+    private void addEpisodeEditListener() {
+        this.episodeEdit.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+            MediaEntry selectedItem = this.mediaTableView.getSelectionModel().getSelectedItem();
+            if (selectedItem != null && newValue != null && selectedItem.getCurrentEpisode() != newValue) {
+                selectedItem.setCurrentEpisode(newValue);
+                this.mediaEntryRepository.save(selectedItem);
+                MediaHandAppController.triggerMediaEntryUpdate(selectedItem);
+            }
+        });
+    }
+
+    private void addWatchStateListener() {
+        this.watchStateEdit.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+            MediaEntry selectedItem = this.mediaTableView.getSelectionModel().getSelectedItem();
+            if (selectedItem != null && !Objects.equals(selectedItem.getWatchState().toString(), newValue)) {
+                selectedItem.setWatchState(WatchState.lookupByName(newValue));
+                this.mediaEntryRepository.save(selectedItem);
+                MediaHandAppController.triggerMediaEntryUpdate(selectedItem);
+            }
+        });
+    }
+
+    private void addWatchedEditListener() {
+        this.watchedEdit.valueProperty().addListener((observable, oldValue, newValue) -> {
+            MediaEntry selectedItem = this.mediaTableView.getSelectionModel().getSelectedItem();
+            if (selectedItem != null && !Objects.equals(selectedItem.getWatchedDate(), newValue)) {
+                selectedItem.setWatchedDate(newValue);
+                this.mediaEntryRepository.save(selectedItem);
+                MediaHandAppController.triggerMediaEntryUpdate(selectedItem);
+            }
+        });
+    }
+
+    private void initThumbnailGeneration(final List<MediaEntry> mediaEntries) {
+        Runnable runnable = () -> {
+            for (MediaEntry mediaEntry : mediaEntries) {
+                if (mediaEntry.isAvailable()) {
+                    for (int i = 1; i <= mediaEntry.getEpisodeNumber(); i++) {
+                        checkThumbnailForEpisode(i, mediaEntry);
+                    }
+                }
+            }
+        };
+        this.checkAllThumbnailsThread = new Thread(runnable);
+        this.checkAllThumbnailsThread.start();
+    }
+
+    private void addPlayTeaserListener() {
+        this.playTeaser.selectedProperty().addListener((observable, oldValue, newValue) -> {
+            MediaEntry mediaEntry = this.mediaTableView.getSelectionModel().getSelectedItem();
+            if (mediaEntry != null && Files.exists(Path.of(mediaEntry.getAbsolutePath() + THUMBNAILS_FOLDER + mediaEntry.getCurrentEpisode() + THUMBNAIL_FILE_TYPE))) {
+                this.mediaTeaser.getThumbnailView().setImage(new Image(
+                        "file:" + mediaEntry.getAbsolutePath() + THUMBNAILS_FOLDER + mediaEntry.getCurrentEpisode() + THUMBNAIL_FILE_TYPE));
+                this.mediaTeaser.switchImageView(false);
+                this.mediaTeaser.pause();
+            }
+            Runnable runnable = () -> {
+                this.updateMediaTeaserStack.push(0);
+                while (!this.updateMediaTeaserStack.empty()) {
+                    updateMediaTeaser();
+                    this.updateMediaTeaserStack.pop();
+                }
+            };
+            if (this.checkThumbnailOnRequestThread != null && this.checkThumbnailOnRequestThread.isAlive()) {
+                if (this.updateMediaTeaserStack.size() < 2) {
+                    this.updateMediaTeaserStack.push(0);
+                }
+            } else {
+                this.checkThumbnailOnRequestThread = new Thread(runnable);
+                this.checkThumbnailOnRequestThread.start();
+            }
+        });
+    }
+
+    private void addMediaTableViewListener() {
         this.mediaTableView.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue != null) {
                 this.selectedMediaTitle.setText(newValue.getTitle());
@@ -209,75 +322,6 @@ public class MediaHandAppController {
                 this.selectedMediaTitle.setTooltip(new Tooltip("Selected media"));
             }
         });
-        this.ratingEdit.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
-            MediaEntry selectedItem = this.mediaTableView.getSelectionModel().getSelectedItem();
-            if (selectedItem != null && newValue != null && selectedItem.getRating() != newValue) {
-                selectedItem.setRating(newValue);
-                this.mediaEntryRepository.save(selectedItem);
-                MediaHandAppController.triggerMediaEntryUpdate(selectedItem);
-            }
-        });
-        this.episodeEdit.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
-            MediaEntry selectedItem = this.mediaTableView.getSelectionModel().getSelectedItem();
-            if (selectedItem != null && newValue != null && selectedItem.getCurrentEpisode() != newValue) {
-                selectedItem.setCurrentEpisode(newValue);
-                this.mediaEntryRepository.save(selectedItem);
-                MediaHandAppController.triggerMediaEntryUpdate(selectedItem);
-            }
-        });
-        this.watchStateEdit.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
-            MediaEntry selectedItem = this.mediaTableView.getSelectionModel().getSelectedItem();
-            if (selectedItem != null && !Objects.equals(selectedItem.getWatchState().toString(), newValue)) {
-                selectedItem.setWatchState(WatchState.lookupByName(newValue));
-                this.mediaEntryRepository.save(selectedItem);
-                MediaHandAppController.triggerMediaEntryUpdate(selectedItem);
-            }
-        });
-        this.watchedEdit.valueProperty().addListener((observable, oldValue, newValue) -> {
-            MediaEntry selectedItem = this.mediaTableView.getSelectionModel().getSelectedItem();
-            if (selectedItem != null && !Objects.equals(selectedItem.getWatchedDate(), newValue)) {
-                selectedItem.setWatchedDate(newValue);
-                this.mediaEntryRepository.save(selectedItem);
-                MediaHandAppController.triggerMediaEntryUpdate(selectedItem);
-            }
-        });
-        this.playTeaser.selectedProperty().addListener((observable, oldValue, newValue) -> {
-            MediaEntry mediaEntry = this.mediaTableView.getSelectionModel().getSelectedItem();
-            if (mediaEntry != null && Files.exists(Path.of(mediaEntry.getAbsolutePath() + THUMBNAILS_FOLDER + mediaEntry.getCurrentEpisode() + THUMBNAIL_FILE_TYPE))) {
-                this.mediaTeaser.getThumbnailView().setImage(new Image(
-                        "file:" + mediaEntry.getAbsolutePath() + THUMBNAILS_FOLDER + mediaEntry.getCurrentEpisode() + THUMBNAIL_FILE_TYPE));
-                this.mediaTeaser.switchImageView(false);
-                this.mediaTeaser.pause();
-            }
-            Runnable runnable = () -> {
-                this.updateMediaTeaserStack.push(0);
-                while (!this.updateMediaTeaserStack.empty()) {
-                    updateMediaTeaser();
-                    this.updateMediaTeaserStack.pop();
-                }
-            };
-            if (this.checkThumbnailOnRequestThread != null && this.checkThumbnailOnRequestThread.isAlive()) {
-                if (this.updateMediaTeaserStack.size() < 2) {
-                    this.updateMediaTeaserStack.push(0);
-                }
-            } else {
-                this.checkThumbnailOnRequestThread = new Thread(runnable);
-                this.checkThumbnailOnRequestThread.start();
-            }
-        });
-        List<MediaEntry> mediaEntries = this.mediaEntryRepository.findAll();
-        Runnable runnable = () -> {
-            for (MediaEntry mediaEntry : mediaEntries) {
-                if (mediaEntry.isAvailable()) {
-                    for (int i = 1; i <= mediaEntry.getEpisodeNumber(); i++) {
-                        checkThumbnailForEpisode(i, mediaEntry);
-                    }
-                }
-            }
-        };
-        this.checkAllThumbnailsThread = new Thread(runnable);
-        this.checkAllThumbnailsThread.start();
-        fillTableView(mediaEntries);
     }
 
     private void updateMediaTeaser() {
@@ -326,21 +370,62 @@ public class MediaHandAppController {
         }
     }
 
+    /**
+     * Checks if a thumbnail for {@code episodeIndex} of {@code mediaEntry} exists. Generates a new thumbnail if none exists.
+     *
+     * @param episodeIndex the index of the episode to check
+     * @param mediaEntry the media entry to check
+     * @return true, if a thumbnail for that episode exists or was successfully generated
+     */
     private boolean checkThumbnailForEpisode(final int episodeIndex, final MediaEntry mediaEntry) {
         try {
             File episode = MediaLoader.getEpisode(mediaEntry.getAbsolutePath(), episodeIndex);
-            if (Files.notExists(Path.of(mediaEntry.getAbsolutePath() + THUMBNAILS_FOLDER + episodeIndex + THUMBNAIL_FILE_TYPE))) {
-                if (mediaEntry.equals(this.mediaTableView.getSelectionModel().getSelectedItem()) && episodeIndex == mediaEntry.getCurrentEpisode()) {
+            if (!thumbnailExists(episodeIndex, mediaEntry)) {
+                if (isCurrentSelection(episodeIndex, mediaEntry)) {
                     this.mediaTeaser.getThumbnailView().setVisible(false);
                 }
                 return generateThumbnail(episode, mediaEntry, episodeIndex, 3);
             }
         } catch (IOException | InterruptedException e) {
             log.error("Could not check thumbnail", e);
+            return false;
         }
         return true;
     }
 
+    /**
+     * Return true, if episode {@code episodeIndex} of {@code mediaEntry} is current selection.
+     *
+     * @param episodeIndex the episode index to be selected
+     * @param mediaEntry the media entry to be selected
+     * @return true, if given episode and media entry is selected
+     */
+    private boolean isCurrentSelection(final int episodeIndex, final MediaEntry mediaEntry) {
+        return mediaEntry.equals(this.mediaTableView.getSelectionModel().getSelectedItem()) && episodeIndex == mediaEntry.getCurrentEpisode();
+    }
+
+    /**
+     * Return true, if a thumbnail for episode {@code episodeIndex} of {@code mediaEntry} exists.
+     *
+     * @param episodeIndex the episode index to check for a thumbnail
+     * @param mediaEntry the media entry to check
+     * @return true, if a thumbnail exists
+     */
+    private boolean thumbnailExists(final int episodeIndex, final MediaEntry mediaEntry) {
+        return Files.exists(Path.of(mediaEntry.getAbsolutePath() + THUMBNAILS_FOLDER + episodeIndex + THUMBNAIL_FILE_TYPE));
+    }
+
+    /**
+     * Generate a new thumbnail for {@code episode} of {@code mediaEntry} at {@code timeInSeconds} of the video.
+     *
+     * @param episode the episode's file
+     * @param mediaEntry the media entry
+     * @param episodeIndex the episode's index
+     * @param timeInSeconds the time to approximately create the thumbnail at in the video
+     * @return true, if the thumbnail was created
+     * @throws IOException if the generated thumbnail could not be processed successfully or the ffmpeg command could not be executed
+     * @throws InterruptedException if the ffmpeg command could not be executed in time (max. 5s)
+     */
     private boolean generateThumbnail(final File episode, final MediaEntry mediaEntry, final int episodeIndex, final int timeInSeconds) throws IOException, InterruptedException {
         String episodePath = episode.getAbsolutePath();
         String command = String.format("ffmpeg -ss %d -i \"%s\" -qscale:v 2 -vf \"select=gt(scene\\,0.5)\" -frames:v 3 -vsync vfr \"%s%s%s%d%s"
@@ -386,6 +471,9 @@ public class MediaHandAppController {
         }
     }
 
+    /**
+     * Cleanup after media entry stopped playing.
+     */
     public void onMediaFinished() {
         this.controlPane.stop();
         boolean fullScreen = this.jfxMediaHandApplication.getStage().isFullScreen();
@@ -398,6 +486,9 @@ public class MediaHandAppController {
         }
     }
 
+    /**
+     * Start listener for xbox controller actions.
+     */
     public void startControllerListener() {
         if (this.isRunning) {
             return;
@@ -410,8 +501,7 @@ public class MediaHandAppController {
             while (this.isRunning) {
                 controllerManager.update();
                 try {
-                    if (this.currentController.isButtonJustPressed(ControllerButton.DPAD_DOWN) || (this.currentController.isButtonPressed(ControllerButton.DPAD_DOWN)
-                            && this.currentController.isButtonPressed(ControllerButton.A))) {
+                    if (this.currentController.isButtonJustPressed(ControllerButton.DPAD_DOWN) || (this.currentController.isButtonPressed(ControllerButton.DPAD_DOWN) && this.currentController.isButtonPressed(ControllerButton.A))) {
                         Platform.runLater(() -> {
                             if (this.mediaTableView.getSelectionModel().isEmpty()) {
                                 this.mediaTableView.getSelectionModel().selectFirst();
@@ -421,8 +511,7 @@ public class MediaHandAppController {
                             }
                         });
                     }
-                    if (this.currentController.isButtonJustPressed(ControllerButton.DPAD_UP) || (this.currentController.isButtonPressed(ControllerButton.DPAD_UP)
-                            && this.currentController.isButtonPressed(ControllerButton.A))) {
+                    if (this.currentController.isButtonJustPressed(ControllerButton.DPAD_UP) || (this.currentController.isButtonPressed(ControllerButton.DPAD_UP) && this.currentController.isButtonPressed(ControllerButton.A))) {
                         Platform.runLater(() -> {
                             this.mediaTableView.getSelectionModel().selectPrevious();
                             this.mediaTableView.scrollTo(this.mediaTableView.getSelectionModel().selectedItemProperty().get());
@@ -481,6 +570,11 @@ public class MediaHandAppController {
         playEmbeddedMedia();
     }
 
+    /**
+     * Sort and update visible media entries of the table.
+     *
+     * @param mediaEntries the media entries to show within the table
+     */
     public void fillTableView(List<MediaEntry> mediaEntries) {
         MediaHandAppController.mediaEntries = FXCollections.observableArrayList(mediaEntries);
 
@@ -496,6 +590,9 @@ public class MediaHandAppController {
         this.mediaTableView.getSortOrder().add(mediaEntryTableTitleColumn);
     }
 
+    /**
+     * Play the selected media entry's current episode with the embedded vlcj player.
+     */
     public void playEmbeddedMedia() {
         MediaEntry selectedItem = this.mediaTableView.getSelectionModel().getSelectedItem();
         if (selectedItem == null) {
@@ -546,6 +643,9 @@ public class MediaHandAppController {
         this.jfxMediaHandApplication.getStage().setFullScreenExitKeyCombination(new KeyCodeCombination(KeyCode.F, KeyCombination.CONTROL_DOWN));
     }
 
+    /**
+     * Play the selected media entry's current episode with the default program for that file.
+     */
     private void playMedia() {
         MediaEntry selectedItem = this.mediaTableView.getSelectionModel().getSelectedItem();
         if (selectedItem == null) {
@@ -632,6 +732,13 @@ public class MediaHandAppController {
         return filter(mediaEntry, this.titleFilter.textProperty().getValue());
     }
 
+    /**
+     * Apply all filters with current selections and input. Return true, if the {@code mediaEntry} should be shown.
+     *
+     * @param mediaEntry the media entry to filter
+     * @param textFilter the text filter to apply
+     * @return
+     */
     private boolean filter(final MediaEntry mediaEntry, final String textFilter) {
         if ((this.showAllCheckbox.isSelected() || mediaEntry.isAvailable()) && mediaEntry.filterByWatchState(this.watchStateFilter.getSelectionModel().getSelectedItem())
                 && mediaEntry.filterByMediaType(this.typeFilter.getSelectionModel().getSelectedItem())) {
