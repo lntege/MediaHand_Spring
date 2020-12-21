@@ -65,7 +65,9 @@ import uk.co.caprica.vlcj.player.base.MediaPlayerEventAdapter;
 public class MediaHandAppController {
 
     public static final String THUMBNAIL_FILE_TYPE = ".jpg";
+
     public static final String THUMBNAILS_FOLDER = "\\thumbnails\\";
+
     public static final int MIN_THUMBNAIL_SIZE_IN_BYTES = 20000;
 
     @FXML
@@ -130,6 +132,7 @@ public class MediaHandAppController {
 
     @Lazy
     @Autowired
+    @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
     private JfxMediaHandApplication jfxMediaHandApplication;
 
     private Thread checkThumbnailOnRequestThread;

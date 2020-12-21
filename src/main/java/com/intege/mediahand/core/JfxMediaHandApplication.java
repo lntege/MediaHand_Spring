@@ -33,6 +33,7 @@ import net.rgielen.fxweaver.core.FxControllerAndView;
 import net.rgielen.fxweaver.core.FxWeaver;
 
 @Slf4j
+@SuppressWarnings("SpringJavaAutowiredMembersInspection")
 public class JfxMediaHandApplication extends Application {
 
     public static final String MEDIA_HAND_TITLE = "Media Hand";

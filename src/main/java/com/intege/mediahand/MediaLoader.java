@@ -47,6 +47,7 @@ public class MediaLoader {
 
     @Lazy
     @Autowired
+    @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
     private JfxMediaHandApplication jfxMediaHandApplication;
 
     /**
