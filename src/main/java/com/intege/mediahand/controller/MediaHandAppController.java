@@ -13,7 +13,9 @@ import java.util.Stack;
 import java.util.concurrent.TimeUnit;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.core.task.TaskExecutor;
 import org.springframework.stereotype.Component;
 
 import com.intege.mediahand.MediaLoader;
@@ -139,7 +141,9 @@ public class MediaHandAppController {
 
     private Stack<Integer> updateMediaTeaserStack;
 
-    private Thread checkAllThumbnailsThread;
+    @Qualifier("thumbnailGenerationExecutor")
+    @Autowired
+    private TaskExecutor thumbnailExecutor;
 
     public void init() {
         this.updateMediaTeaserStack = new Stack<>();
@@ -232,18 +236,21 @@ public class MediaHandAppController {
         });
     }
 
-    private void initThumbnailGeneration(final List<MediaEntry> mediaEntries) {
-        Runnable runnable = () -> {
-            for (MediaEntry mediaEntry : mediaEntries) {
-                if (mediaEntry.isAvailable()) {
-                    for (int i = 1; i <= mediaEntry.getEpisodeNumber(); i++) {
-                        checkThumbnailForEpisode(i, mediaEntry);
-                    }
+    private void generateThumbnails(final MediaEntry mediaEntry) {
+        this.thumbnailExecutor.execute(() -> {
+            if (mediaEntry.isAvailable()) {
+                for (int i = 1; i <= mediaEntry.getEpisodeNumber(); i++) {
+                    int finalIndex = i;
+                    this.thumbnailExecutor.execute(() -> checkThumbnailForEpisode(finalIndex, mediaEntry));
                 }
             }
-        };
-        this.checkAllThumbnailsThread = new Thread(runnable);
-        this.checkAllThumbnailsThread.start();
+        });
+    }
+
+    private void initThumbnailGeneration(final List<MediaEntry> mediaEntries) {
+        for (MediaEntry mediaEntry : mediaEntries) {
+            this.thumbnailExecutor.execute(() -> generateThumbnails(mediaEntry));
+        }
     }
 
     private void addPlayTeaserListener() {
@@ -255,22 +262,31 @@ public class MediaHandAppController {
                 this.mediaTeaser.switchImageView(false);
                 this.mediaTeaser.pause();
             }
-            Runnable runnable = () -> {
-                this.updateMediaTeaserStack.push(0);
-                while (!this.updateMediaTeaserStack.empty()) {
-                    updateMediaTeaser();
-                    this.updateMediaTeaserStack.pop();
-                }
-            };
-            if (this.checkThumbnailOnRequestThread != null && this.checkThumbnailOnRequestThread.isAlive()) {
-                if (this.updateMediaTeaserStack.size() < 2) {
-                    this.updateMediaTeaserStack.push(0);
-                }
-            } else {
-                this.checkThumbnailOnRequestThread = new Thread(runnable);
-                this.checkThumbnailOnRequestThread.start();
-            }
+
+            handleThumbnailOnRequestThread();
         });
+    }
+
+    private void handleThumbnailOnRequestThread() {
+        if (this.checkThumbnailOnRequestThread != null && this.checkThumbnailOnRequestThread.isAlive()) {
+            if (this.updateMediaTeaserStack.size() < 2) {
+                this.updateMediaTeaserStack.push(0);
+            }
+        } else {
+            initUpdateMediaTeaserThread();
+        }
+    }
+
+    private void initUpdateMediaTeaserThread() {
+        Runnable runnable = () -> {
+            this.updateMediaTeaserStack.push(0);
+            while (!this.updateMediaTeaserStack.empty()) {
+                updateMediaTeaser();
+                this.updateMediaTeaserStack.pop();
+            }
+        };
+        this.checkThumbnailOnRequestThread = new Thread(runnable);
+        this.checkThumbnailOnRequestThread.start();
     }
 
     private void addMediaTableViewListener() {
@@ -297,21 +313,7 @@ public class MediaHandAppController {
                         this.mediaTeaser.switchImageView(false);
                         this.mediaTeaser.pause();
                     }
-                    Runnable runnable = () -> {
-                        this.updateMediaTeaserStack.push(0);
-                        while (!this.updateMediaTeaserStack.empty()) {
-                            updateMediaTeaser();
-                            this.updateMediaTeaserStack.pop();
-                        }
-                    };
-                    if (this.checkThumbnailOnRequestThread != null && this.checkThumbnailOnRequestThread.isAlive()) {
-                        if (this.updateMediaTeaserStack.size() < 2) {
-                            this.updateMediaTeaserStack.push(0);
-                        }
-                    } else {
-                        this.checkThumbnailOnRequestThread = new Thread(runnable);
-                        this.checkThumbnailOnRequestThread.start();
-                    }
+                    handleThumbnailOnRequestThread();
                 } else {
                     this.mediaTeaser.pause();
                     this.mediaTeaser.switchImageView(false);
@@ -718,10 +720,6 @@ public class MediaHandAppController {
 
     public Thread getCheckThumbnailOnRequestThread() {
         return this.checkThumbnailOnRequestThread;
-    }
-
-    public Thread getCheckAllThumbnailsThread() {
-        return this.checkAllThumbnailsThread;
     }
 
     public void onFilter() {

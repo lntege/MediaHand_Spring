@@ -100,9 +100,6 @@ public class JfxMediaHandApplication extends Application {
         this.settingsEntryRepository.save(this.settingsEntry);
 
         try {
-            if (this.mediaHandAppController.getCheckAllThumbnailsThread() != null) {
-                this.mediaHandAppController.getCheckAllThumbnailsThread().join();
-            }
             if (this.mediaHandAppController.getCheckThumbnailOnRequestThread() != null) {
                 this.mediaHandAppController.getCheckThumbnailOnRequestThread().join();
             }
