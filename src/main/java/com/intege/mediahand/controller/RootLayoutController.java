@@ -17,6 +17,7 @@ public class RootLayoutController {
 
     @Lazy
     @Autowired
+    @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
     private JfxMediaHandApplication jfxMediaHandApplication;
 
     @Autowired
