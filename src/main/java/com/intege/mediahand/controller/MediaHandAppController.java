@@ -68,8 +68,6 @@ public class MediaHandAppController {
 
     public static final String THUMBNAILS_FOLDER = "\\thumbnails\\";
 
-    public static final int MIN_THUMBNAIL_SIZE_IN_BYTES = 20000;
-
     @FXML
     public TableView<MediaEntry> mediaTableView;
 
@@ -737,7 +735,7 @@ public class MediaHandAppController {
      *
      * @param mediaEntry the media entry to filter
      * @param textFilter the text filter to apply
-     * @return
+     * @return true, if the media entry should be shown
      */
     private boolean filter(final MediaEntry mediaEntry, final String textFilter) {
         if ((this.showAllCheckbox.isSelected() || mediaEntry.isAvailable()) && mediaEntry.filterByWatchState(this.watchStateFilter.getSelectionModel().getSelectedItem())
@@ -769,4 +767,5 @@ public class MediaHandAppController {
             MediaHandAppController.triggerMediaEntryUpdate(selectedItem);
         }
     }
+
 }
