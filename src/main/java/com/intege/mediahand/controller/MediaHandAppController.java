@@ -153,7 +153,7 @@ public class MediaHandAppController {
         addRatingEditValues();
         addAllListeners();
         List<MediaEntry> mediaEntries = this.mediaEntryRepository.findAll();
-        initThumbnailGeneration(mediaEntries);
+//        initThumbnailGeneration(mediaEntries);
         fillTableView(mediaEntries);
     }
 
@@ -441,14 +441,16 @@ public class MediaHandAppController {
             Path thumbnail = null;
             for (int i = 1; i <= 3; i++) {
                 Path tmpThumbnail = Path.of(mediaEntry.getAbsolutePath() + THUMBNAILS_FOLDER + "version_0" + i + "_" + episodeIndex + THUMBNAIL_FILE_TYPE);
-                if (Files.size(tmpThumbnail) > size) {
-                    size = Files.size(tmpThumbnail);
-                    if (thumbnail != null) {
-                        Files.delete(thumbnail);
+                if (Files.exists(tmpThumbnail)) {
+                    if (Files.size(tmpThumbnail) > size) {
+                        size = Files.size(tmpThumbnail);
+                        if (thumbnail != null) {
+                            Files.delete(thumbnail);
+                        }
+                        thumbnail = tmpThumbnail;
+                    } else {
+                        Files.delete(tmpThumbnail);
                     }
-                    thumbnail = tmpThumbnail;
-                } else {
-                    Files.delete(tmpThumbnail);
                 }
             }
             assert thumbnail != null;

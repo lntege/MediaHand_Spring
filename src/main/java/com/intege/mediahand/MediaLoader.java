@@ -62,7 +62,6 @@ public class MediaLoader {
 
     }
 
-    @Transactional
     public void addMedia(final DirectoryEntry basePath) {
         Check.notNullArgument(basePath, "basePath");
 
@@ -75,7 +74,7 @@ public class MediaLoader {
      *
      * @param path Directory with media inside.
      */
-    private void addMedia(final String path) {
+    public void addMedia(final String path) {
         File f;
         Path p;
 
@@ -117,12 +116,12 @@ public class MediaLoader {
      *
      * @param newMediaEntry the {@link MediaEntry} to add
      */
-    private void addSingleMedia(final MediaEntry newMediaEntry) {
+    @Transactional
+    public void addSingleMedia(final MediaEntry newMediaEntry) {
         ObservableList<MediaEntry> mediaEntries = MediaHandAppController.getMediaEntries();
         FilteredList<MediaEntry> mediaEntryFilteredList = null;
         if (mediaEntries != null) {
-            mediaEntryFilteredList = mediaEntries
-                    .filtered(m -> m.getTitle().equals(newMediaEntry.getTitle()));
+            mediaEntryFilteredList = mediaEntries.filtered(m -> m.getTitle().equals(newMediaEntry.getTitle()));
         }
         if (mediaEntryFilteredList == null || mediaEntryFilteredList.isEmpty()) {
             this.mediaEntryRepository.save(newMediaEntry);
@@ -134,6 +133,7 @@ public class MediaLoader {
                 mediaEntry.setMediaType(newMediaEntry.getMediaType());
                 mediaEntry.setEpisodeNumber(newMediaEntry.getEpisodeNumber());
                 mediaEntry.setAvailable(true);
+                this.mediaEntryRepository.save(mediaEntry);
             } else {
                 updateMediaEntryEpisodes(newMediaEntry, mediaEntry);
             }
