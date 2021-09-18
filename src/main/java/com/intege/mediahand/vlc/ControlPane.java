@@ -173,6 +173,7 @@ public class ControlPane implements MediaPlayerComponent {
         });
     }
 
+    @Override
     public void stop() {
         this.isRunning = false;
         if (this.embeddedMediaPlayer.status().isPlaying()) {

@@ -31,8 +31,6 @@ import com.intege.mediahand.vlc.MediaPlayerContextMenu;
 import com.intege.mediahand.vlc.event.StopRenderingSceneHandler;
 import com.intege.utils.PipeStream;
 import com.studiohartman.jamepad.ControllerButton;
-import com.studiohartman.jamepad.ControllerIndex;
-import com.studiohartman.jamepad.ControllerManager;
 import com.studiohartman.jamepad.ControllerUnpluggedException;
 
 import javafx.application.Platform;
@@ -116,7 +114,7 @@ public class MediaHandAppController {
     @FXML
     public CheckBox playTeaser;
 
-    private ControllerIndex currentController;
+    private CustomControllerIndex currentController;
 
     private boolean isRunning;
 
@@ -493,7 +491,7 @@ public class MediaHandAppController {
         if (this.isRunning) {
             return;
         }
-        ControllerManager controllerManager = new ControllerManager();
+        CustomControllerManager controllerManager = new CustomControllerManager();
         controllerManager.initSDLGamepad();
         this.currentController = controllerManager.getControllerIndex(0);
         Thread thread = new Thread(() -> {
@@ -501,7 +499,8 @@ public class MediaHandAppController {
             while (this.isRunning) {
                 controllerManager.update();
                 try {
-                    if (this.currentController.isButtonJustPressed(ControllerButton.DPAD_DOWN) || (this.currentController.isButtonPressed(ControllerButton.DPAD_DOWN) && this.currentController.isButtonPressed(ControllerButton.A))) {
+                    if (this.currentController.isButtonJustPressed(ControllerButton.DPAD_DOWN) || (this.currentController.isButtonPressed(ControllerButton.DPAD_DOWN)
+                            && this.currentController.isButtonPressed(ControllerButton.A))) {
                         Platform.runLater(() -> {
                             if (this.mediaTableView.getSelectionModel().isEmpty()) {
                                 this.mediaTableView.getSelectionModel().selectFirst();
@@ -511,7 +510,8 @@ public class MediaHandAppController {
                             }
                         });
                     }
-                    if (this.currentController.isButtonJustPressed(ControllerButton.DPAD_UP) || (this.currentController.isButtonPressed(ControllerButton.DPAD_UP) && this.currentController.isButtonPressed(ControllerButton.A))) {
+                    if (this.currentController.isButtonJustPressed(ControllerButton.DPAD_UP) || (this.currentController.isButtonPressed(ControllerButton.DPAD_UP)
+                            && this.currentController.isButtonPressed(ControllerButton.A))) {
                         Platform.runLater(() -> {
                             this.mediaTableView.getSelectionModel().selectPrevious();
                             this.mediaTableView.scrollTo(this.mediaTableView.getSelectionModel().selectedItemProperty().get());
