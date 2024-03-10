@@ -53,6 +53,7 @@ public class MediaLoader {
     /**
      * Adds all media of every directory path in dirTable into the mediaTable.
      */
+    @Transactional
     public void addAllMedia() {
         List<DirectoryEntry> basePaths = this.directoryEntryRepository.findAll();
 
@@ -62,6 +63,7 @@ public class MediaLoader {
 
     }
 
+    @Transactional
     public void addMedia(final DirectoryEntry basePath) {
         Check.notNullArgument(basePath, "basePath");
 
@@ -74,7 +76,7 @@ public class MediaLoader {
      *
      * @param path Directory with media inside.
      */
-    public void addMedia(final String path) {
+    private void addMedia(final String path) {
         File f;
         Path p;
 
@@ -116,8 +118,7 @@ public class MediaLoader {
      *
      * @param newMediaEntry the {@link MediaEntry} to add
      */
-    @Transactional
-    public void addSingleMedia(final MediaEntry newMediaEntry) {
+    private void addSingleMedia(final MediaEntry newMediaEntry) {
         ObservableList<MediaEntry> mediaEntries = MediaHandAppController.getMediaEntries();
         FilteredList<MediaEntry> mediaEntryFilteredList = null;
         if (mediaEntries != null) {

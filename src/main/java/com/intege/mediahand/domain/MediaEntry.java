@@ -24,8 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Entity
-public @Data
-class MediaEntry {
+public @Data class MediaEntry {
 
     /**
      * Id in the database.
@@ -124,7 +123,7 @@ class MediaEntry {
 
     @PostLoad
     public void init() {
-        this.available = new File(getAbsolutePath()).exists();
+        this.available = fileExists();
     }
 
     public MediaEntry(String title, int episodeNumber, String mediaType, WatchState watchState, int rating, String path, int currentEpisode, LocalDate added, int episodeLength,
@@ -164,6 +163,10 @@ class MediaEntry {
 
     public boolean filterByMediaType(final String mediaType) {
         return mediaType.equals("All") || mediaType.equals(this.mediaType);
+    }
+
+    public boolean fileExists() {
+        return new File(getAbsolutePath()).exists();
     }
 
 }

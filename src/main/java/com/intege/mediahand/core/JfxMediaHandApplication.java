@@ -4,6 +4,8 @@ import java.io.File;
 import java.nio.file.Path;
 import java.util.Optional;
 
+import javax.transaction.Transactional;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
 import org.springframework.boot.builder.SpringApplicationBuilder;
@@ -28,18 +30,20 @@ import javafx.scene.layout.BorderPane;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import net.rgielen.fxweaver.core.FxControllerAndView;
 import net.rgielen.fxweaver.core.FxWeaver;
 
 @Slf4j
-@SuppressWarnings("SpringJavaAutowiredMembersInspection")
+@SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
 public class JfxMediaHandApplication extends Application {
 
     public static final String MEDIA_HAND_TITLE = "Media Hand";
 
     private ConfigurableApplicationContext applicationContext;
 
+    @Getter
     private Stage stage;
 
     private Scene scene;
@@ -48,6 +52,7 @@ public class JfxMediaHandApplication extends Application {
 
     private SettingsEntry settingsEntry;
 
+    @Getter
     private MediaHandAppController mediaHandAppController;
 
     @Autowired
@@ -132,7 +137,7 @@ public class JfxMediaHandApplication extends Application {
     }
 
     private void validateBasePath() {
-        if (this.directoryEntryRepository.findAll().size() == 0) {
+        if (this.directoryEntryRepository.findAll().isEmpty()) {
             addBasePath();
         }
     }
@@ -162,6 +167,7 @@ public class JfxMediaHandApplication extends Application {
         }
     }
 
+    @Transactional
     public boolean addBasePath() {
         Optional<File> baseDir = chooseMediaDirectory();
 
@@ -194,14 +200,6 @@ public class JfxMediaHandApplication extends Application {
      */
     public Optional<File> chooseMediaDirectory() {
         return chooseMediaDirectory(null);
-    }
-
-    public MediaHandAppController getMediaHandAppController() {
-        return this.mediaHandAppController;
-    }
-
-    public Stage getStage() {
-        return this.stage;
     }
 
 }

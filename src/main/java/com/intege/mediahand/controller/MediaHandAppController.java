@@ -54,6 +54,7 @@ import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.input.KeyCombination;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.StackPane;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import net.rgielen.fxweaver.core.FxmlView;
 import uk.co.caprica.vlcj.player.base.MediaPlayer;
@@ -133,6 +134,7 @@ public class MediaHandAppController {
     @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
     private JfxMediaHandApplication jfxMediaHandApplication;
 
+    @Getter
     private Thread checkThumbnailOnRequestThread;
 
     private Stack<Integer> updateMediaTeaserStack;
@@ -153,7 +155,7 @@ public class MediaHandAppController {
         addRatingEditValues();
         addAllListeners();
         List<MediaEntry> mediaEntries = this.mediaEntryRepository.findAll();
-//        initThumbnailGeneration(mediaEntries);
+        //        initThumbnailGeneration(mediaEntries);
         fillTableView(mediaEntries);
     }
 
@@ -599,7 +601,7 @@ public class MediaHandAppController {
         MediaEntry selectedItem = this.mediaTableView.getSelectionModel().getSelectedItem();
         if (selectedItem == null) {
             MessageUtil.infoAlert("Play media", "Please select a media entry.");
-        } else if (!selectedItem.isAvailable()) {
+        } else if (!selectedItem.isAvailable() && !selectedItem.fileExists()) {
             MessageUtil.infoAlert(
                     "Play media: " + selectedItem.getAbsolutePath(), "Selected media is not available. Deselect 'Show All' to show only media of connected media directories.");
         } else {
@@ -656,9 +658,16 @@ public class MediaHandAppController {
             MessageUtil.infoAlert(
                     "Play media: " + selectedItem.getAbsolutePath(), "Selected media is not available. Deselect 'Show All' to show only media of connected media directories.");
         } else {
-            Desktop desktop = Desktop.getDesktop();
+            File file = null;
             try {
-                File file = MediaLoader.getEpisode(selectedItem.getAbsolutePath(), selectedItem.getCurrentEpisode());
+                file = MediaLoader.getEpisode(selectedItem.getAbsolutePath(), selectedItem.getCurrentEpisode());
+            } catch (IOException e) {
+                MessageUtil.warningAlert(e);
+                changeMediaLocation();
+                return;
+            }
+            if (Desktop.isDesktopSupported()) {
+                Desktop desktop = Desktop.getDesktop();
                 try {
                     desktop.open(file);
                     this.mediaTeaser.pause();
@@ -666,9 +675,14 @@ public class MediaHandAppController {
                 } catch (IOException e) {
                     MessageUtil.warningAlert(e);
                 }
-            } catch (IOException e) {
-                MessageUtil.warningAlert(e);
-                changeMediaLocation();
+            } else {
+                try {
+                    Runtime.getRuntime().exec(new String[]{"rundll32", "url.dll,FileProtocolHandler", file.getAbsolutePath()});
+                    this.mediaTeaser.pause();
+                    this.mediaTeaser.switchImageView(false);
+                } catch (IOException e) {
+                    MessageUtil.warningAlert(e);
+                }
             }
         }
     }
@@ -716,10 +730,6 @@ public class MediaHandAppController {
 
     public MediaEntry getSelectedMediaEntry() {
         return this.mediaTableView.getSelectionModel().getSelectedItem();
-    }
-
-    public Thread getCheckThumbnailOnRequestThread() {
-        return this.checkThumbnailOnRequestThread;
     }
 
     public void onFilter() {
