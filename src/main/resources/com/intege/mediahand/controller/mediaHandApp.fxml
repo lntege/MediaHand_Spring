@@ -30,11 +30,16 @@
 					  text="Auto continue"/>
 			<CheckBox fx:id="showAllCheckbox" layoutX="3.0" layoutY="250.0" mnemonicParsing="false" onAction="#onFilter"
 					  text="Show All" translateY="30.0"/>
-			<ComboBox fx:id="watchStateFilter" layoutX="3.0" layoutY="280.0" onAction="#onFilter" prefHeight="25.0"
-					  prefWidth="150.0" translateY="30.0"/>
-			<ComboBox fx:id="typeFilter" layoutX="3.0" layoutY="382.0" onAction="#onFilter" prefHeight="25.0"
+			<Label layoutX="3.0" layoutY="313.0" text="Base path"/>
+			<ComboBox fx:id="basePathFilter" layoutX="75.0" layoutY="310.0" onAction="#onFilter" prefHeight="25.0"
 					  prefWidth="150.0"/>
-			<TextField fx:id="titleFilter" layoutX="3.0" layoutY="316.0" translateY="30.0"/>
+			<Label layoutX="3.0" layoutY="349.0" text="Watch state"/>
+			<ComboBox fx:id="watchStateFilter" layoutX="75.0" layoutY="346.0" onAction="#onFilter" prefHeight="25.0"
+					  prefWidth="150.0"/>
+			<Label layoutX="3.0" layoutY="380" text="Media type"/>
+			<ComboBox fx:id="typeFilter" layoutX="75.0" layoutY="382.0" onAction="#onFilter" prefHeight="25.0"
+					  prefWidth="150.0"/>
+			<TextField fx:id="titleFilter" layoutX="3.0" layoutY="415.0" translateY="30.0"/>
 			<Line endX="76.0" layoutX="96.0" layoutY="228.0" startX="-100.0" translateY="30.0"/>
 			<ComboBox fx:id="watchStateEdit" layoutX="3.0" layoutY="60.0" prefWidth="150.0"/>
 			<ComboBox fx:id="ratingEdit" layoutX="97.0" layoutY="101.0" prefHeight="25.0" prefWidth="55.0"/>

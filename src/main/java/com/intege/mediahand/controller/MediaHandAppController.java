@@ -22,6 +22,7 @@ import com.intege.mediahand.MediaLoader;
 import com.intege.mediahand.WatchState;
 import com.intege.mediahand.core.JfxMediaHandApplication;
 import com.intege.mediahand.domain.MediaEntry;
+import com.intege.mediahand.domain.repository.DirectoryEntryRepository;
 import com.intege.mediahand.domain.repository.MediaEntryRepository;
 import com.intege.mediahand.utils.MessageUtil;
 import com.intege.mediahand.vlc.ControlPane;
@@ -87,6 +88,9 @@ public class MediaHandAppController {
     public ComboBox<String> typeFilter;
 
     @FXML
+    public ComboBox<String> basePathFilter;
+
+    @FXML
     public CheckBox showAllCheckbox;
 
     @FXML
@@ -130,6 +134,9 @@ public class MediaHandAppController {
     @Autowired
     private MediaEntryRepository mediaEntryRepository;
 
+    @Autowired
+    private DirectoryEntryRepository directoryEntryRepository;
+
     @Lazy
     @Autowired
     @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
@@ -151,6 +158,7 @@ public class MediaHandAppController {
         startControllerListener();
         addWatchStateFilter();
         addMediaTypeFilter();
+        addBasePathFilter();
         addTitleTooltip();
         addWatchStateEditValues();
         addRatingEditValues();
@@ -565,6 +573,13 @@ public class MediaHandAppController {
         this.typeFilter.getSelectionModel().select("All");
     }
 
+    private void addBasePathFilter() {
+        List<String> basePaths = new ArrayList<>(this.directoryEntryRepository.findAllBasePaths());
+        basePaths.add(0, "All");
+        this.basePathFilter.setItems(FXCollections.observableArrayList(basePaths));
+        this.basePathFilter.getSelectionModel().select("All");
+    }
+
     public void onPlayEnter(KeyEvent keyEvent) {
         if (keyEvent.getCode() == KeyCode.ENTER) {
             playMedia();
@@ -750,7 +765,8 @@ public class MediaHandAppController {
      */
     private boolean filter(final MediaEntry mediaEntry, final String textFilter) {
         if ((this.showAllCheckbox.isSelected() || mediaEntry.isAvailable()) && mediaEntry.filterByWatchState(this.watchStateFilter.getSelectionModel().getSelectedItem())
-                && mediaEntry.filterByMediaType(this.typeFilter.getSelectionModel().getSelectedItem())) {
+                && mediaEntry.filterByMediaType(this.typeFilter.getSelectionModel().getSelectedItem())
+                && mediaEntry.filterByBasePath(this.basePathFilter.getSelectionModel().getSelectedItem())) {
             if (textFilter == null || textFilter.isEmpty()) {
                 return true;
             }
