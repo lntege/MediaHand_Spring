@@ -6,7 +6,6 @@ import org.springframework.stereotype.Component;
 
 import com.intege.mediahand.MediaLoader;
 import com.intege.mediahand.core.JfxMediaHandApplication;
-import com.intege.mediahand.domain.MediaEntry;
 import com.intege.mediahand.domain.repository.MediaEntryRepository;
 import com.intege.mediahand.utils.MessageUtil;
 
@@ -40,13 +39,6 @@ public class RootLayoutController {
     public void loadNewMediaEntries() {
         this.mediaLoader.addAllMedia();
         this.mediaHandAppController.fillTableView(this.mediaEntryRepository.findAll());
-    }
-
-    public void onRemove() {
-        MediaEntry selectedMediaEntry = this.mediaHandAppController.getSelectedMediaEntry();
-        if (selectedMediaEntry != null) {
-            this.mediaEntryRepository.delete(selectedMediaEntry);
-        }
     }
 
     public void addMedia() {

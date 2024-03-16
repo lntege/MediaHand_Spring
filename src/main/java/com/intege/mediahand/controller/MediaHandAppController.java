@@ -38,6 +38,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.collections.transformation.SortedList;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
@@ -778,4 +779,22 @@ public class MediaHandAppController {
         }
     }
 
+    public void onRemove(final ActionEvent actionEvent) {
+        MediaEntry selectedMediaEntry = getSelectedMediaEntry();
+        if (selectedMediaEntry != null) {
+            this.mediaEntryRepository.delete(selectedMediaEntry);
+            fillTableView(this.mediaEntryRepository.findAll());
+        }
+    }
+
+    public void openEntryInExplorer(final ActionEvent actionEvent) {
+        MediaEntry selectedMediaEntry = getSelectedMediaEntry();
+        if (selectedMediaEntry != null) {
+            try {
+                Runtime.getRuntime().exec("explorer " + selectedMediaEntry.getAbsolutePath());
+            } catch (IOException e) {
+                System.out.println(e.getMessage());
+            }
+        }
+    }
 }
