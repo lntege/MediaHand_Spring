@@ -166,7 +166,7 @@ public @Data class MediaEntry {
     }
 
     public boolean filterByBasePath(final String basePath) {
-        return basePath.equals("All") || basePath.equals(this.basePath.getPath());
+        return basePath.equals("All") || (this.basePath != null && basePath.equals(this.basePath.getPath()));
     }
 
     public boolean fileExists() {
