@@ -15,6 +15,8 @@
                 <MenuItem mnemonicParsing="false" onAction="#loadNewMediaEntries" text="Reload all"/>
                 <SeparatorMenuItem/>
                 <MenuItem mnemonicParsing="false" text="Remove" onAction="#onRemove"/>
+                <SeparatorMenuItem/>
+                <MenuItem mnemonicParsing="false" onAction="#showHelp" text="Help"/>
             </Menu>
         </MenuBar>
     </top>

@@ -8,7 +8,9 @@ import com.intege.mediahand.MediaLoader;
 import com.intege.mediahand.core.JfxMediaHandApplication;
 import com.intege.mediahand.domain.MediaEntry;
 import com.intege.mediahand.domain.repository.MediaEntryRepository;
+import com.intege.mediahand.utils.MessageUtil;
 
+import javafx.event.ActionEvent;
 import net.rgielen.fxweaver.core.FxmlView;
 
 @Component
@@ -52,4 +54,8 @@ public class RootLayoutController {
         this.mediaHandAppController.fillTableView(this.mediaEntryRepository.findAll());
     }
 
+    public void showHelp(final ActionEvent actionEvent) {
+        MessageUtil.infoAlert("", "Table:\n    Enter - Play selected media using vlc player\n\nInline player:\n    Space - play/pause\n    F - fullscreen\n    "
+                + "Ctrl+F - exit fullscreen\n    Enter - skip opening\n    Up - next episode\n    Down - previous episode\n    Plus - volume up\n    Minus - volume down\n    Esc - exit inline player");
+    }
 }
