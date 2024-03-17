@@ -1,5 +1,6 @@
 package com.intege.mediahand.fetching;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -24,4 +25,19 @@ class AniworldFetcherTest {
         assertFalse(result.isEmpty(), "No VOE url found");
         assertTrue(result.get(0).toString().contains("https://vincentincludesuccessful.com"), "Result is not a valid VOE URL. Got: " + result.get(0));
     }
+
+    @Test
+    void testExtractEpisodes() throws IOException {
+        // given
+        AniworldFetcher aniworldFetcher = new AniworldFetcher();
+        URL url = new URL("https://aniworld.to/anime/stream/shangri-la-frontier/staffel-1");
+
+        // when
+        List<URL> result = aniworldFetcher.extractEpisodes(url);
+
+        // then
+        assertFalse(result.isEmpty(), "No episodes urls found");
+        assertEquals("https://aniworld.to/anime/stream/shangri-la-frontier/staffel-1/episode-1", result.get(0).toString());
+    }
+
 }

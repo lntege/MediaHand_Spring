@@ -33,4 +33,20 @@ public class AniworldFetcher implements SourceFetcher {
         return urls;
     }
 
+    @Override
+    public List<URL> extractEpisodes(final URL url) throws IOException {
+        Document document = Jsoup.connect(url.toExternalForm()).get();
+        Elements links = document.select("tr td.seasonEpisodeTitle:has(a[href]) a[href]");
+
+        List<URL> hrefList = new ArrayList<>();
+        String urlPath = url.getPath() + "/";
+        for (Element link : links) {
+            String href = link.attr("href");
+            if (href.startsWith(urlPath)) {
+                hrefList.add(new URL(url.getProtocol() + "://" + url.getHost() + href));
+            }
+        }
+        return hrefList;
+    }
+
 }

@@ -6,4 +6,6 @@ import java.util.List;
 
 public interface SourceFetcher {
     List<URL> extractVoeUrl(URL url) throws IOException;
+
+    List<URL> extractEpisodes(URL url) throws IOException;
 }

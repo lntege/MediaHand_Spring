@@ -639,7 +639,7 @@ public class MediaHandAppController {
 
                 boolean started = false;
                 if (selectedItem.getMediaType().equals(MEDIATYPE_EXTERNAL)) {
-                    List<String> hlsStream = getHlsStream(selectedItem);
+                    List<String> hlsStream = getHlsStreamOfCurrentEpisode(selectedItem);
                     if (!hlsStream.isEmpty()) {
                         started = this.javaFxMediaPlayer.start(hlsStream.get(LANG));
                     }
@@ -694,7 +694,7 @@ public class MediaHandAppController {
             File file = null;
             List<String> hlsStreams = new ArrayList<>();
             if (selectedItem.getMediaType().equals(MEDIATYPE_EXTERNAL)) {
-                hlsStreams = getHlsStream(selectedItem);
+                hlsStreams = getHlsStreamOfCurrentEpisode(selectedItem);
                 if (hlsStreams.isEmpty()) {
                     return;
                 }
@@ -735,11 +735,13 @@ public class MediaHandAppController {
         }
     }
 
-    private List<String> getHlsStream(final MediaEntry selectedItem) {
+    private List<String> getHlsStreamOfCurrentEpisode(final MediaEntry selectedItem) {
         List<String> hlsStreams = new ArrayList<>();
         String path = selectedItem.getPath();
         try {
-            List<URL> voeUrls = SourceFetcherFactory.getAniworldFetcherInstance().extractVoeUrl(new URL(path));
+            int episodeIndex = selectedItem.getCurrentEpisode() - 1;
+            URL episodeUrl = SourceFetcherFactory.getAniworldFetcherInstance().extractEpisodes(new URL(path)).get(episodeIndex);
+            List<URL> voeUrls = SourceFetcherFactory.getAniworldFetcherInstance().extractVoeUrl(episodeUrl);
             if (voeUrls.isEmpty()) {
                 MessageUtil.infoAlert("Play media: " + path, "Can not stream selected entry. Voe url not found for " + selectedItem.getTitle());
             }
