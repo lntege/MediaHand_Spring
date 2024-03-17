@@ -11,6 +11,7 @@
         <MenuBar BorderPane.alignment="CENTER">
             <Menu mnemonicParsing="false" text="File">
                 <MenuItem mnemonicParsing="false" onAction="#addMedia" text="Add Media"/>
+                <MenuItem mnemonicParsing="false" onAction="#addExternalMedia" text="Add External Media"/>
                 <MenuItem mnemonicParsing="false" onAction="#addDirectory" text="Add Dir"/>
                 <MenuItem mnemonicParsing="false" onAction="#loadNewMediaEntries" text="Reload all"/>
                 <SeparatorMenuItem/>

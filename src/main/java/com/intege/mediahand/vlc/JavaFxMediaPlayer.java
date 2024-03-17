@@ -6,6 +6,7 @@ import javafx.scene.Scene;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
+import lombok.Getter;
 import uk.co.caprica.vlcj.factory.MediaPlayerFactory;
 import uk.co.caprica.vlcj.javafx.videosurface.ImageViewVideoSurfaceFactory;
 import uk.co.caprica.vlcj.player.base.EventApi;
@@ -15,12 +16,15 @@ public class JavaFxMediaPlayer implements MediaPlayerComponent {
 
     private final MediaPlayerFactory mediaPlayerFactory;
 
-    private final EmbeddedMediaPlayer embeddedMediaPlayer;
-
     private final ImageView imageView;
 
+    @Getter
+    private final EmbeddedMediaPlayer embeddedMediaPlayer;
+
+    @Getter
     private final Scene scene;
 
+    @Getter
     private final StackPane stackPane;
 
     public JavaFxMediaPlayer() {
@@ -34,24 +38,16 @@ public class JavaFxMediaPlayer implements MediaPlayerComponent {
         this.scene = new Scene(this.stackPane, Color.BLACK);
     }
 
-    public Scene getScene() {
-        return this.scene;
-    }
-
     public EventApi events() {
         return this.embeddedMediaPlayer.events();
     }
 
-    public EmbeddedMediaPlayer getEmbeddedMediaPlayer() {
-        return this.embeddedMediaPlayer;
-    }
-
-    public StackPane getStackPane() {
-        return this.stackPane;
-    }
-
     public boolean start(final File media) {
         return this.embeddedMediaPlayer.media().start(media.getAbsolutePath());
+    }
+
+    public boolean start(final String hslStream) {
+        return this.embeddedMediaPlayer.media().start(hslStream);
     }
 
     @Override

@@ -8,11 +8,13 @@ import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.layout.Pane;
+import lombok.Getter;
 import uk.co.caprica.vlcj.player.base.TrackDescription;
 import uk.co.caprica.vlcj.player.embedded.EmbeddedMediaPlayer;
 
 public class MediaPlayerContextMenu {
 
+    @Getter
     private final ContextMenu contextMenu;
 
     private final EmbeddedMediaPlayer embeddedMediaPlayer;
@@ -25,10 +27,6 @@ public class MediaPlayerContextMenu {
         this.contextMenu = new ContextMenu();
         this.embeddedMediaPlayer = embeddedMediaPlayer;
         this.parent = parent;
-    }
-
-    public ContextMenu getContextMenu() {
-        return this.contextMenu;
     }
 
     public void update(final MediaEntry mediaEntry) {

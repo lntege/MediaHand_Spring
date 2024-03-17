@@ -1,14 +1,17 @@
-package com.intege.mediahand.fetching;
+package com.intege.mediahand.fetching.source;
 
 public class MediaSourceFetcherFactory {
 
     private static VoeFetcher voeFetcherInstance;
 
     public static MediaSourceFetcher getMediaSourceFetcher(final SourceType mediaType) {
-        if (mediaType == SourceType.VOE) {
-            return getVoeFetcherInstance();
+        switch (mediaType) {
+            case VOE:
+                return getVoeFetcherInstance();
+            default:
+                return getVoeFetcherInstance();
+
         }
-        return null;
     }
 
     private static VoeFetcher getVoeFetcherInstance() {

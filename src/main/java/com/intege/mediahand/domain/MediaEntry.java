@@ -1,5 +1,7 @@
 package com.intege.mediahand.domain;
 
+import static com.intege.mediahand.controller.RootLayoutController.MEDIATYPE_EXTERNAL;
+
 import java.io.File;
 import java.time.LocalDate;
 import java.util.Objects;
@@ -123,7 +125,7 @@ public @Data class MediaEntry {
 
     @PostLoad
     public void init() {
-        this.available = fileExists();
+        this.available = fileExists() || getMediaType().equals(MEDIATYPE_EXTERNAL);
     }
 
     public MediaEntry(String title, int episodeNumber, String mediaType, WatchState watchState, int rating, String path, int currentEpisode, LocalDate added, int episodeLength,

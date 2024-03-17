@@ -1,11 +1,15 @@
 package com.intege.mediahand.controller;
 
+import java.time.LocalDate;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import com.intege.mediahand.MediaLoader;
+import com.intege.mediahand.WatchState;
 import com.intege.mediahand.core.JfxMediaHandApplication;
+import com.intege.mediahand.domain.MediaEntry;
 import com.intege.mediahand.domain.repository.MediaEntryRepository;
 import com.intege.mediahand.utils.MessageUtil;
 
@@ -16,6 +20,7 @@ import net.rgielen.fxweaver.core.FxmlView;
 @FxmlView("rootLayout.fxml")
 public class RootLayoutController {
 
+    public static final String MEDIATYPE_EXTERNAL = "External";
     @Lazy
     @Autowired
     @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
@@ -43,6 +48,11 @@ public class RootLayoutController {
 
     public void addMedia() {
         this.mediaLoader.addSingleMedia();
+        this.mediaHandAppController.fillTableView(this.mediaEntryRepository.findAll());
+    }
+
+    public void addExternalMedia() {
+        this.mediaLoader.addSingleMedia(new MediaEntry("Shangrila", 1, MEDIATYPE_EXTERNAL, WatchState.WANT_TO_WATCH, 0, "https://aniworld.to/anime/stream/shangri-la-frontier/staffel-1/episode-23", 1, LocalDate.now(), 0, null, 0, null, 50, null, null));
         this.mediaHandAppController.fillTableView(this.mediaEntryRepository.findAll());
     }
 

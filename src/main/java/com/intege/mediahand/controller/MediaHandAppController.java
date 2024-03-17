@@ -1,8 +1,12 @@
 package com.intege.mediahand.controller;
 
+import static com.intege.mediahand.controller.RootLayoutController.MEDIATYPE_EXTERNAL;
+
 import java.awt.Desktop;
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -24,6 +28,9 @@ import com.intege.mediahand.core.JfxMediaHandApplication;
 import com.intege.mediahand.domain.MediaEntry;
 import com.intege.mediahand.domain.repository.DirectoryEntryRepository;
 import com.intege.mediahand.domain.repository.MediaEntryRepository;
+import com.intege.mediahand.fetching.SourceFetcherFactory;
+import com.intege.mediahand.fetching.source.MediaSourceFetcherFactory;
+import com.intege.mediahand.fetching.source.SourceType;
 import com.intege.mediahand.utils.MessageUtil;
 import com.intege.mediahand.vlc.ControlPane;
 import com.intege.mediahand.vlc.JavaFxMediaPlayer;
@@ -313,7 +320,7 @@ public class MediaHandAppController {
                 }
                 this.episodeEdit.getSelectionModel().select(newValue.getCurrentEpisode() - 1);
                 this.watchedEdit.setValue(newValue.getWatchedDate());
-                if (newValue.isAvailable()) {
+                if (newValue.isAvailable() && !newValue.getMediaType().equals(MEDIATYPE_EXTERNAL)) {
                     if (Files.exists(Path.of(newValue.getAbsolutePath() + THUMBNAILS_FOLDER + newValue.getCurrentEpisode() + THUMBNAIL_FILE_TYPE))) {
                         this.mediaTeaser.getThumbnailView().setImage(new Image(
                                 "file:" + newValue.getAbsolutePath() + THUMBNAILS_FOLDER + newValue.getCurrentEpisode() + THUMBNAIL_FILE_TYPE));
@@ -622,15 +629,23 @@ public class MediaHandAppController {
                     "Play media: " + selectedItem.getAbsolutePath(), "Selected media is not available. Deselect 'Show All' to show only media of connected media directories.");
         } else {
             try {
-                File file = MediaLoader.getEpisode(selectedItem.getAbsolutePath(), selectedItem.getCurrentEpisode());
-
                 String windowTitle = selectedItem.getTitle() + " : Episode " + selectedItem.getCurrentEpisode();
                 this.isRunning = false;
 
                 this.jfxMediaHandApplication.getStage().setTitle(windowTitle);
                 this.jfxMediaHandApplication.getStage().setScene(this.javaFxMediaPlayer.getScene());
 
-                if (this.javaFxMediaPlayer.start(file)) {
+                boolean started = false;
+                if (selectedItem.getMediaType().equals(MEDIATYPE_EXTERNAL)) {
+                    String hlsStream = getHlsStream(selectedItem);
+                    if (hlsStream != null) {
+                        started = this.javaFxMediaPlayer.start(hlsStream);
+                    }
+                } else {
+                    File file = MediaLoader.getEpisode(selectedItem.getAbsolutePath(), selectedItem.getCurrentEpisode());
+                    started = this.javaFxMediaPlayer.start(file);
+                }
+                if (started) {
                     this.mediaTeaser.pause();
                     this.mediaTeaser.switchImageView(false);
                     this.controlPane.update(selectedItem);
@@ -675,16 +690,27 @@ public class MediaHandAppController {
                     "Play media: " + selectedItem.getAbsolutePath(), "Selected media is not available. Deselect 'Show All' to show only media of connected media directories.");
         } else {
             File file = null;
-            try {
-                file = MediaLoader.getEpisode(selectedItem.getAbsolutePath(), selectedItem.getCurrentEpisode());
-            } catch (IOException e) {
-                MessageUtil.warningAlert(e);
-                changeMediaLocation();
-                return;
+            String hlsStream = null;
+            if (selectedItem.getMediaType().equals(MEDIATYPE_EXTERNAL)) {
+                hlsStream = getHlsStream(selectedItem);
+                if (hlsStream == null) {
+                    return;
+                }
+            } else {
+                try {
+                    file = MediaLoader.getEpisode(selectedItem.getAbsolutePath(), selectedItem.getCurrentEpisode());
+                } catch (IOException e) {
+                    MessageUtil.warningAlert(e);
+                    changeMediaLocation();
+                    return;
+                }
             }
             if (Desktop.isDesktopSupported()) {
                 Desktop desktop = Desktop.getDesktop();
                 try {
+                    if (hlsStream != null) {
+                        desktop.browse(URI.create(hlsStream));
+                    }
                     desktop.open(file);
                     this.mediaTeaser.pause();
                     this.mediaTeaser.switchImageView(false);
@@ -693,7 +719,11 @@ public class MediaHandAppController {
                 }
             } else {
                 try {
-                    Runtime.getRuntime().exec(new String[]{"rundll32", "url.dll,FileProtocolHandler", file.getAbsolutePath()});
+                    if (hlsStream != null) {
+                        Runtime.getRuntime().exec(new String[]{"vlc ", hlsStream});
+                    } else {
+                        Runtime.getRuntime().exec(new String[]{"rundll32", "url.dll,FileProtocolHandler", file.getAbsolutePath()});
+                    }
                     this.mediaTeaser.pause();
                     this.mediaTeaser.switchImageView(false);
                 } catch (IOException e) {
@@ -701,6 +731,28 @@ public class MediaHandAppController {
                 }
             }
         }
+    }
+
+    private String getHlsStream(final MediaEntry selectedItem) {
+        String hlsStream;
+        String path = selectedItem.getPath();
+        try {
+            Optional<URL> voeUrl = SourceFetcherFactory.getAniworldFetcherInstance().extractVoeUrl(new URL(path));
+            if (voeUrl.isEmpty()) {
+                MessageUtil.infoAlert("Play media: " + path, "Can not stream selected entry. Voe url not found for " + selectedItem.getTitle());
+                return null;
+            }
+            Optional<String> hlsUrl = MediaSourceFetcherFactory.getMediaSourceFetcher(SourceType.VOE).extractHlsUrl(voeUrl.get().toExternalForm());
+            if (hlsUrl.isEmpty()) {
+                MessageUtil.infoAlert("Play media: " + path, "Can not stream selected entry. Hls url not found for " + selectedItem.getTitle());
+                return null;
+            }
+            hlsStream = hlsUrl.get();
+        } catch (IOException e) {
+            MessageUtil.infoAlert("Play media: " + path, "Can not stream selected entry " + selectedItem.getTitle() + ". " + e.getMessage());
+            return null;
+        }
+        return hlsStream;
     }
 
     private void changeMediaLocation() {

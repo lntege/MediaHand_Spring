@@ -36,7 +36,7 @@
 			<Label layoutX="3.0" layoutY="349.0" text="Watch state"/>
 			<ComboBox fx:id="watchStateFilter" layoutX="75.0" layoutY="346.0" onAction="#onFilter" prefHeight="25.0"
 					  prefWidth="150.0"/>
-			<Label layoutX="3.0" layoutY="380" text="Media type"/>
+			<Label layoutX="3.0" layoutY="385" text="Media type"/>
 			<ComboBox fx:id="typeFilter" layoutX="75.0" layoutY="382.0" onAction="#onFilter" prefHeight="25.0"
 					  prefWidth="150.0"/>
 			<TextField fx:id="titleFilter" layoutX="3.0" layoutY="415.0" translateY="30.0"/>

@@ -118,7 +118,8 @@ public class MediaLoader {
      *
      * @param newMediaEntry the {@link MediaEntry} to add
      */
-    private void addSingleMedia(final MediaEntry newMediaEntry) {
+    @Transactional
+    public void addSingleMedia(final MediaEntry newMediaEntry) {
         ObservableList<MediaEntry> mediaEntries = MediaHandAppController.getMediaEntries();
         FilteredList<MediaEntry> mediaEntryFilteredList = null;
         if (mediaEntries != null) {

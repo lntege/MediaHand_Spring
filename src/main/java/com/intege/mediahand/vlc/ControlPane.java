@@ -67,7 +67,11 @@ public class ControlPane implements MediaPlayerComponent {
 
     public void update(final MediaEntry mediaEntry) {
         this.mediaEntry = mediaEntry;
-        double mediaDuration = this.embeddedMediaPlayer.media().info().duration() / 60000.0;
+        long duration = this.embeddedMediaPlayer.media().info().duration();
+        if (duration == 0) {
+            duration = 60000 * 25;
+        }
+        double mediaDuration = duration / 60000.0;
         BorderPane sliderPane = initSliderPane(mediaDuration);
         showTimedTimeSlider(ControlPane.TIME_SLIDER_DELAY * 3);
 
