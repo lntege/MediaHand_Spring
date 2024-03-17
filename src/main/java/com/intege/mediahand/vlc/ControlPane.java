@@ -22,6 +22,7 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import uk.co.caprica.vlcj.player.base.MediaPlayerEventAdapter;
 import uk.co.caprica.vlcj.player.embedded.EmbeddedMediaPlayer;
@@ -31,6 +32,7 @@ public class ControlPane implements MediaPlayerComponent {
 
     private static final long TIME_SLIDER_DELAY = 1000;
 
+    @Getter
     private final BorderPane borderPane;
 
     private final EmbeddedMediaPlayer embeddedMediaPlayer;
@@ -61,10 +63,6 @@ public class ControlPane implements MediaPlayerComponent {
         initControllerControl();
         addTimeListener();
         addKeyControlListeners(scene);
-    }
-
-    public BorderPane getBorderPane() {
-        return this.borderPane;
     }
 
     public void update(final MediaEntry mediaEntry) {
@@ -161,11 +159,11 @@ public class ControlPane implements MediaPlayerComponent {
             } else if (event.getCode() == KeyCode.MINUS || event.getCode() == KeyCode.SUBTRACT) {
                 this.volumeSlider.setValue(this.volumeSlider.getValue() - 5);
                 showTimedTimeSlider(ControlPane.TIME_SLIDER_DELAY);
-            } else if (event.getCode() == KeyCode.NUMPAD6) {
+            } else if (event.getCode() == KeyCode.NUMPAD6 || event.getCode() == KeyCode.D) {
                 this.embeddedMediaPlayer.controls().skipTime(2000);
                 updateMediaTimeSlider(this.embeddedMediaPlayer.status().time());
                 showTimedTimeSlider(ControlPane.TIME_SLIDER_DELAY);
-            } else if (event.getCode() == KeyCode.NUMPAD4) {
+            } else if (event.getCode() == KeyCode.NUMPAD4 || event.getCode() == KeyCode.A) {
                 this.embeddedMediaPlayer.controls().skipTime(-2000);
                 updateMediaTimeSlider(this.embeddedMediaPlayer.status().time());
                 showTimedTimeSlider(ControlPane.TIME_SLIDER_DELAY);
@@ -220,12 +218,11 @@ public class ControlPane implements MediaPlayerComponent {
         this.mediaTimeSlider = initMediaTimeSlider(mediaDuration);
         this.volumeSlider = initVolumeSlider(this.mediaEntry.getVolume());
 
-        String length = ((int) (mediaDuration / 1) + ":" + (int) ((mediaDuration % 1) * 60));
+        String length = ((int) (mediaDuration) + ":" + (int) ((mediaDuration % 1) * 60));
         Label currentTimeLabel = new Label(length);
         currentTimeLabel.setTextFill(Color.YELLOW);
-        this.mediaTimeSlider.valueProperty().addListener((observable, oldValue, newValue) -> {
-            currentTimeLabel.setText((int) (newValue.doubleValue() / 1) + ":" + (int) ((newValue.doubleValue() % 1) * 60) + " - " + length);
-        });
+        this.mediaTimeSlider.valueProperty().addListener((observable, oldValue, newValue) -> currentTimeLabel.setText(
+                (int) (newValue.doubleValue()) + ":" + (int) ((newValue.doubleValue() % 1) * 60) + " - " + length));
         VBox vBox = new VBox(this.mediaTimeSlider, currentTimeLabel);
         vBox.setPadding(new Insets(3, 0, 5, 5));
 
