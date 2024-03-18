@@ -1,5 +1,6 @@
 package com.intege.mediahand.utils;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
@@ -19,10 +20,11 @@ class MediaSourceFetcherTest {
         String url = "https://vincentincludesuccessful.com/e/hyauc3pvewkz";
 
         // when
-        Optional<String> result = mediaSourceFetcher.extractHlsUrl(url);
+        Optional<VoeFetcher.HlsUrl> result = mediaSourceFetcher.extractHlsUrl(url);
 
         // then
         assertTrue(result.isPresent());
-        assertTrue(result.get().contains("master.m3u8"), "Result is not a valid HLS URL. Got: " + result.get());
+        assertTrue(result.get().getUrl().contains("master.m3u8"), "Result is not a valid HLS URL. Got: " + result.get());
+        assertEquals(1416, result.get().getDuration());
     }
 }

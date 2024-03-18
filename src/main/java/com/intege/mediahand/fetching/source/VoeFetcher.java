@@ -10,21 +10,49 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+
 public class VoeFetcher implements MediaSourceFetcher {
 
     @Override
-    public Optional<String> extractHlsUrl(String url) throws IOException {
-            Document document = Jsoup.connect(url).get();
-            Elements scripts = document.select("script");
+    public Optional<HlsUrl> extractHlsUrl(String url) throws IOException {
+        Document document = Jsoup.connect(url).get();
+        Elements scripts = document.select("script");
 
-            Pattern pattern = Pattern.compile("'hls':\\s+'(.*?)'");
-            for (Element script : scripts) {
-                Matcher matcher = pattern.matcher(script.html());
+        Pattern hlsPattern = Pattern.compile("'hls':\\s+'(.*?)'");
+        Pattern durationPattern = Pattern.compile("duration: (\\d+)");
+
+        String hlsLink = null;
+        long duration = 0;
+        for (Element script : scripts) {
+            if (hlsLink == null) {
+                Matcher matcher = hlsPattern.matcher(script.html());
                 if (matcher.find()) {
-                    return Optional.of(matcher.group(1));
+                    hlsLink = matcher.group(1);
                 }
             }
+            if (duration == 0) {
+                Matcher matcher = durationPattern.matcher(script.html());
+                if (matcher.find()) {
+                    duration = Long.parseLong(matcher.group(1));
+                }
+            }
+            if (hlsLink != null && duration > 0) {
+                return Optional.of(new HlsUrl(hlsLink, duration));
+            }
+        }
+        if (hlsLink != null) {
+            return Optional.of(new HlsUrl(hlsLink, duration));
+        }
         return Optional.empty();
+    }
+
+    @Getter
+    @AllArgsConstructor
+    public static class HlsUrl {
+        private String url;
+        private long duration;
     }
 
 }

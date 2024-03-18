@@ -4,5 +4,5 @@ import java.io.IOException;
 import java.util.Optional;
 
 public interface MediaSourceFetcher {
-    Optional<String> extractHlsUrl(String url) throws IOException;
+    Optional<VoeFetcher.HlsUrl> extractHlsUrl(String url) throws IOException;
 }

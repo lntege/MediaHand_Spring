@@ -65,11 +65,15 @@ public class ControlPane implements MediaPlayerComponent {
         addKeyControlListeners(scene);
     }
 
-    public void update(final MediaEntry mediaEntry) {
+    public void update(final MediaEntry mediaEntry, final long externalDurationSeconds) {
         this.mediaEntry = mediaEntry;
         long duration = this.embeddedMediaPlayer.media().info().duration();
-        if (duration == 0) {
-            duration = 60000 * 25;
+        if (duration <= 0) {
+            if (externalDurationSeconds > 0) {
+                duration = externalDurationSeconds * 1000;
+            } else {
+                duration = 60000 * 25;
+            }
         }
         double mediaDuration = duration / 60000.0;
         BorderPane sliderPane = initSliderPane(mediaDuration);

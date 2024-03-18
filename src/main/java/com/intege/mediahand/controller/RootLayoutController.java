@@ -56,10 +56,11 @@ public class RootLayoutController {
     }
 
     public void addExternalMedia() throws IOException {
-        String url = "https://aniworld.to/anime/stream/shangri-la-frontier/staffel-1";
+        //        String url = "https://aniworld.to/anime/stream/shangri-la-frontier/staffel-1";
+        String url = "https://aniworld.to/anime/stream/tsukimichi-moonlit-fantasy/staffel-2";
         URL seasonUrl = new URL(url);
         List<URL> urls = SourceFetcherFactory.getAniworldFetcherInstance().extractEpisodes(seasonUrl);
-        this.mediaLoader.addSingleMedia(new MediaEntry("Shangrila Season 1", urls.size(), MEDIATYPE_EXTERNAL, WatchState.WANT_TO_WATCH, 0, url, 1, LocalDate.now(), 0, null, 0, null, 50, null, null));
+        this.mediaLoader.addSingleMedia(new MediaEntry("Tsukimichi Moonlit Fantasy Season 2", urls.size(), MEDIATYPE_EXTERNAL, WatchState.WANT_TO_WATCH, 0, url, 1, LocalDate.now(), 0, null, 0, null, 50, null, null));
         this.mediaHandAppController.fillTableView(this.mediaEntryRepository.findAll());
     }
 
