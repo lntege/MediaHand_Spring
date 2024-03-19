@@ -1,7 +1,5 @@
 package com.intege.mediahand.domain;
 
-import static com.intege.mediahand.controller.RootLayoutController.MEDIATYPE_EXTERNAL;
-
 import java.io.File;
 import java.time.LocalDate;
 import java.util.Objects;
@@ -27,6 +25,8 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Entity
 public @Data class MediaEntry {
+
+    public static final String MEDIATYPE_EXTERNAL = "External";
 
     /**
      * Id in the database.
@@ -120,12 +120,16 @@ public @Data class MediaEntry {
     @Transient
     private boolean available;
 
+    @Transient
+    private boolean externalMediaUpdated;
+
     protected MediaEntry() {
+        this.externalMediaUpdated = false;
     }
 
     @PostLoad
     public void init() {
-        this.available = fileExists() || getMediaType().equals(MEDIATYPE_EXTERNAL);
+        this.available = fileExists() || isExternalMediaUrl();
     }
 
     public MediaEntry(String title, int episodeNumber, String mediaType, WatchState watchState, int rating, String path, int currentEpisode, LocalDate added, int episodeLength,
@@ -149,6 +153,10 @@ public @Data class MediaEntry {
         this.subtitleTrack = subtitleTrack;
 
         this.available = new File(getAbsolutePath()).exists();
+    }
+
+    public boolean isExternalMediaUrl() {
+        return getMediaType().equals(MEDIATYPE_EXTERNAL);
     }
 
     public String getAbsolutePath() {

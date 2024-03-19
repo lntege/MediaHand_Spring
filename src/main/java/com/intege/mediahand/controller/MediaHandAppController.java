@@ -1,7 +1,5 @@
 package com.intege.mediahand.controller;
 
-import static com.intege.mediahand.controller.RootLayoutController.MEDIATYPE_EXTERNAL;
-
 import java.awt.Desktop;
 import java.io.File;
 import java.io.IOException;
@@ -309,6 +307,19 @@ public class MediaHandAppController {
     private void addMediaTableViewListener() {
         this.mediaTableView.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue != null) {
+                if (newValue.isExternalMediaUrl() && !newValue.isExternalMediaUpdated()) {
+                    try {
+                        int episodeCount = SourceFetcherFactory.getAniworldFetcherInstance().extractEpisodes(new URL(newValue.getPath())).size();
+                        if (episodeCount != newValue.getEpisodeNumber()) {
+                            MediaLoader.updateMediaEntryEpisodes(newValue, episodeCount);
+                            this.mediaEntryRepository.save(newValue);
+                            MediaHandAppController.triggerMediaEntryUpdate(newValue);
+                        }
+                        newValue.setExternalMediaUpdated(true);
+                    } catch (IOException e) {
+                        MessageUtil.infoAlert("Unable to update episode count of media entry: " + newValue.getTitle(), e.getMessage());
+                    }
+                }
                 this.selectedMediaTitle.setText(newValue.getTitle());
                 this.selectedMediaTitle.setTooltip(new Tooltip(newValue.getTitle()));
                 this.watchStateEdit.getSelectionModel().select(newValue.getWatchState().toString());
@@ -323,7 +334,7 @@ public class MediaHandAppController {
                 }
                 this.episodeEdit.getSelectionModel().select(newValue.getCurrentEpisode() - 1);
                 this.watchedEdit.setValue(newValue.getWatchedDate());
-                if (newValue.isAvailable() && !newValue.getMediaType().equals(MEDIATYPE_EXTERNAL)) {
+                if (newValue.isAvailable() && !newValue.isExternalMediaUrl()) {
                     if (Files.exists(Path.of(newValue.getAbsolutePath() + THUMBNAILS_FOLDER + newValue.getCurrentEpisode() + THUMBNAIL_FILE_TYPE))) {
                         this.mediaTeaser.getThumbnailView().setImage(new Image(
                                 "file:" + newValue.getAbsolutePath() + THUMBNAILS_FOLDER + newValue.getCurrentEpisode() + THUMBNAIL_FILE_TYPE));
@@ -640,7 +651,7 @@ public class MediaHandAppController {
 
                 boolean started = false;
                 long duration = 0;
-                if (selectedItem.getMediaType().equals(MEDIATYPE_EXTERNAL)) {
+                if (selectedItem.isExternalMediaUrl()) {
                     List<VoeFetcher.HlsUrl> hlsStream = getHlsStreamOfCurrentEpisode(selectedItem);
                     if (!hlsStream.isEmpty()) {
                         duration = hlsStream.get(LANG).getDuration();
@@ -696,7 +707,7 @@ public class MediaHandAppController {
         } else {
             File file = null;
             List<VoeFetcher.HlsUrl> hlsStreams = new ArrayList<>();
-            if (selectedItem.getMediaType().equals(MEDIATYPE_EXTERNAL)) {
+            if (selectedItem.isExternalMediaUrl()) {
                 hlsStreams = getHlsStreamOfCurrentEpisode(selectedItem);
                 if (hlsStreams.isEmpty()) {
                     return;

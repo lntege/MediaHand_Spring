@@ -22,6 +22,7 @@ import com.intege.mediahand.domain.DirectoryEntry;
 import com.intege.mediahand.domain.MediaEntry;
 import com.intege.mediahand.domain.repository.DirectoryEntryRepository;
 import com.intege.mediahand.domain.repository.MediaEntryRepository;
+import com.intege.mediahand.utils.MessageUtil;
 import com.intege.utils.Check;
 
 import javafx.collections.ObservableList;
@@ -169,8 +170,15 @@ public class MediaLoader {
     }
 
     private void updateMediaEntryEpisodes(final MediaEntry newMediaEntry, final MediaEntry mediaEntry) {
-        mediaEntry.setEpisodeNumber(newMediaEntry.getEpisodeNumber());
+        updateMediaEntryEpisodes(mediaEntry, newMediaEntry.getEpisodeNumber());
+    }
+
+    public static void updateMediaEntryEpisodes(final MediaEntry mediaEntry, final int episodeCount) {
+        mediaEntry.setEpisodeNumber(episodeCount);
         if (mediaEntry.getCurrentEpisode() > mediaEntry.getEpisodeNumber()) {
+            MessageUtil.infoAlert("Update media entry",
+                    "Current episode is higher than the new episode number. Set current episode to new episode number: " + mediaEntry.getCurrentEpisode() + "/"
+                            + mediaEntry.getEpisodeNumber());
             mediaEntry.setCurrentEpisode(mediaEntry.getEpisodeNumber());
         }
     }

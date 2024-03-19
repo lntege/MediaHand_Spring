@@ -1,5 +1,7 @@
 package com.intege.mediahand.controller;
 
+import static com.intege.mediahand.domain.MediaEntry.MEDIATYPE_EXTERNAL;
+
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -26,7 +28,6 @@ import net.rgielen.fxweaver.core.FxmlView;
 @FxmlView("rootLayout.fxml")
 public class RootLayoutController {
 
-    public static final String MEDIATYPE_EXTERNAL = "External";
     @Lazy
     @Autowired
     @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
@@ -78,7 +79,7 @@ public class RootLayoutController {
             return;
         }
         List<URL> urls = SourceFetcherFactory.getAniworldFetcherInstance().extractEpisodes(seasonUrl);
-        this.mediaLoader.addSingleMedia(new MediaEntry(title, urls.size(), MEDIATYPE_EXTERNAL, WatchState.WANT_TO_WATCH, 0, url, 1, LocalDate.now(), 0, null, 0, null, 50, null, null));
+        this.mediaLoader.addSingleMedia(new MediaEntry(title, urls.size(), MEDIATYPE_EXTERNAL, WatchState.WATCHING, 0, url, 1, LocalDate.now(), 0, null, 0, null, 50, null, null));
         this.mediaHandAppController.fillTableView(this.mediaEntryRepository.findAll());
     }
 
