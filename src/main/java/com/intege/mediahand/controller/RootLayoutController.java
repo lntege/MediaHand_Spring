@@ -1,6 +1,7 @@
 package com.intege.mediahand.controller;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.time.LocalDate;
 import java.util.List;
@@ -18,6 +19,7 @@ import com.intege.mediahand.fetching.SourceFetcherFactory;
 import com.intege.mediahand.utils.MessageUtil;
 
 import javafx.event.ActionEvent;
+import javafx.scene.control.TextInputDialog;
 import net.rgielen.fxweaver.core.FxmlView;
 
 @Component
@@ -56,11 +58,27 @@ public class RootLayoutController {
     }
 
     public void addExternalMedia() throws IOException {
-        //        String url = "https://aniworld.to/anime/stream/shangri-la-frontier/staffel-1";
-        String url = "https://aniworld.to/anime/stream/tsukimichi-moonlit-fantasy/staffel-2";
-        URL seasonUrl = new URL(url);
+        TextInputDialog td = new TextInputDialog("https://aniworld.to/anime/stream/shangri-la-frontier/staffel-1");
+        td.setHeaderText("Enter URL to external media");
+        td.showAndWait();
+        String url = td.getEditor().getText();
+        URL seasonUrl;
+        try {
+            seasonUrl = new URL(url);
+        } catch (MalformedURLException e) {
+            MessageUtil.infoAlert("Add external media", "Invalid URL. " + e.getMessage());
+            return;
+        }
+        td = new TextInputDialog();
+        td.setHeaderText("Enter a title");
+        td.showAndWait();
+        String title = td.getEditor().getText();
+        if (title.isEmpty()) {
+            MessageUtil.infoAlert("Add external media", "Title can not be empty");
+            return;
+        }
         List<URL> urls = SourceFetcherFactory.getAniworldFetcherInstance().extractEpisodes(seasonUrl);
-        this.mediaLoader.addSingleMedia(new MediaEntry("Tsukimichi Moonlit Fantasy Season 2", urls.size(), MEDIATYPE_EXTERNAL, WatchState.WANT_TO_WATCH, 0, url, 1, LocalDate.now(), 0, null, 0, null, 50, null, null));
+        this.mediaLoader.addSingleMedia(new MediaEntry(title, urls.size(), MEDIATYPE_EXTERNAL, WatchState.WANT_TO_WATCH, 0, url, 1, LocalDate.now(), 0, null, 0, null, 50, null, null));
         this.mediaHandAppController.fillTableView(this.mediaEntryRepository.findAll());
     }
 
