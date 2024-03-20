@@ -41,6 +41,8 @@ import com.studiohartman.jamepad.ControllerButton;
 import com.studiohartman.jamepad.ControllerUnpluggedException;
 
 import javafx.application.Platform;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
@@ -62,6 +64,8 @@ import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.input.KeyCombination;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.StackPane;
+import javafx.scene.shape.Line;
+import javafx.scene.text.Text;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import net.rgielen.fxweaver.core.FxmlView;
@@ -128,6 +132,14 @@ public class MediaHandAppController {
     @FXML
     public CheckBox playTeaser;
 
+    @FXML
+    public Line newEpisodesLine;
+
+    @FXML
+    public Text newEpisodesText;
+
+    BooleanProperty newEpisodesAvailable = new SimpleBooleanProperty(false);
+
     private CustomControllerIndex currentController;
 
     private boolean isRunning;
@@ -184,6 +196,8 @@ public class MediaHandAppController {
         addWatchStateListener();
         addWatchedEditListener();
         addPlayTeaserListener();
+        this.newEpisodesLine.visibleProperty().bind(this.newEpisodesAvailable);
+        this.newEpisodesText.visibleProperty().bind(this.newEpisodesAvailable);
     }
 
     private void addTitleTooltip() {
@@ -271,7 +285,8 @@ public class MediaHandAppController {
     private void addPlayTeaserListener() {
         this.playTeaser.selectedProperty().addListener((observable, oldValue, newValue) -> {
             MediaEntry mediaEntry = this.mediaTableView.getSelectionModel().getSelectedItem();
-            if (mediaEntry != null && Files.exists(Path.of(mediaEntry.getAbsolutePath() + THUMBNAILS_FOLDER + mediaEntry.getCurrentEpisode() + THUMBNAIL_FILE_TYPE))) {
+            if (mediaEntry != null && !mediaEntry.isExternalMediaUrl() && Files.exists(Path.of(
+                    mediaEntry.getAbsolutePath() + THUMBNAILS_FOLDER + mediaEntry.getCurrentEpisode() + THUMBNAIL_FILE_TYPE))) {
                 this.mediaTeaser.getThumbnailView().setImage(new Image(
                         "file:" + mediaEntry.getAbsolutePath() + THUMBNAILS_FOLDER + mediaEntry.getCurrentEpisode() + THUMBNAIL_FILE_TYPE));
                 this.mediaTeaser.switchImageView(false);
@@ -311,6 +326,7 @@ public class MediaHandAppController {
                     try {
                         int episodeCount = SourceFetcherFactory.getAniworldFetcherInstance().extractEpisodes(new URL(newValue.getPath())).size();
                         if (episodeCount != newValue.getEpisodeNumber()) {
+                            newValue.setNewEpisodesAvailable(episodeCount > newValue.getEpisodeNumber());
                             MediaLoader.updateMediaEntryEpisodes(newValue, episodeCount);
                             this.mediaEntryRepository.save(newValue);
                             MediaHandAppController.triggerMediaEntryUpdate(newValue);
@@ -320,6 +336,7 @@ public class MediaHandAppController {
                         MessageUtil.infoAlert("Unable to update episode count of media entry: " + newValue.getTitle(), e.getMessage());
                     }
                 }
+                this.newEpisodesAvailable.set(newValue.isNewEpisodesAvailable());
                 this.selectedMediaTitle.setText(newValue.getTitle());
                 this.selectedMediaTitle.setTooltip(new Tooltip(newValue.getTitle()));
                 this.watchStateEdit.getSelectionModel().select(newValue.getWatchState().toString());

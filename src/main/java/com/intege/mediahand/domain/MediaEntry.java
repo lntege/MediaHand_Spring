@@ -123,6 +123,9 @@ public @Data class MediaEntry {
     @Transient
     private boolean externalMediaUpdated;
 
+    @Transient
+    private boolean newEpisodesAvailable;
+
     protected MediaEntry() {
         this.externalMediaUpdated = false;
     }
