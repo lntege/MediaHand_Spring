@@ -21,14 +21,35 @@
 			fx:controller="com.intege.mediahand.controller.MediaHandAppController">
 	<right>
 		<AnchorPane prefHeight="436.0" prefWidth="174.0" BorderPane.alignment="CENTER">
+			<!--Controls-->
 			<Button layoutX="3.0" layoutY="3.0" mnemonicParsing="false" onAction="#onPlayButton" prefHeight="25.0"
 					prefWidth="64.0" text="Play"/>
-			<Button layoutX="129.0" layoutY="174.0" mnemonicParsing="false" onAction="#increaseCurrentEpisode"
-					prefHeight="25.0" prefWidth="25.0" text="+"/>
-			<Button layoutX="95.0" layoutY="174.0" mnemonicParsing="false" onAction="#decreaseCurrentEpisode"
-					prefHeight="25.0" prefWidth="25.0" text="-"/>
 			<CheckBox fx:id="autoContinueCheckbox" layoutX="75.0" layoutY="6.0" mnemonicParsing="false"
 					  text="Auto continue"/>
+
+			<Line endX="76.0" layoutX="97.0" layoutY="34.0" startX="-100.0"/>
+
+			<!--Selected media-->
+			<Label fx:id="selectedMediaTitle" layoutX="3.0" layoutY="38.0" maxWidth="150.0" text="Selected media"/>
+			<ComboBox fx:id="watchStateEdit" layoutX="3.0" layoutY="60.0" prefWidth="150.0"/>
+			<Label layoutX="50.0" layoutY="105.0" text="Rating"/>
+			<ComboBox fx:id="ratingEdit" layoutX="97.0" layoutY="101.0" prefHeight="25.0" prefWidth="55.0"/>
+			<DatePicker fx:id="watchedEdit" layoutX="3.0" layoutY="137.0" prefHeight="25.0" prefWidth="151.0"/>
+			<ComboBox fx:id="episodeEdit" layoutX="3.0" layoutY="174.0" prefHeight="25.0" prefWidth="83.0"/>
+			<Button layoutX="95.0" layoutY="174.0" mnemonicParsing="false" onAction="#decreaseCurrentEpisode"
+					prefHeight="25.0" prefWidth="25.0" text="-"/>
+			<Button layoutX="129.0" layoutY="174.0" mnemonicParsing="false" onAction="#increaseCurrentEpisode"
+					prefHeight="25.0" prefWidth="25.0" text="+"/>
+			<Label layoutX="30.0" layoutY="218.0" text="#Watched"/>
+			<Button layoutX="95.0" layoutY="214.0" mnemonicParsing="false" onAction="#decreaseWatched" prefHeight="25.0"
+					prefWidth="25.0" text="-"/>
+			<Button layoutX="129.0" layoutY="214.0" mnemonicParsing="false" onAction="#increaseWatched"
+					prefHeight="25.0" prefWidth="25.0" text="+"/>
+
+			<Line endX="76.0" layoutX="96.0" layoutY="228.0" startX="-100.0" translateY="30.0"/>
+
+			<!--Filter-->
+			<Label layoutX="3.0" layoutY="232.0" text="Filter" translateY="30.0"/>
 			<CheckBox fx:id="showAllCheckbox" layoutX="3.0" layoutY="250.0" mnemonicParsing="false" onAction="#onFilter"
 					  text="Show All" translateY="30.0"/>
 			<Label layoutX="3.0" layoutY="313.0" text="Base path"/>
@@ -41,23 +62,12 @@
 			<ComboBox fx:id="typeFilter" layoutX="75.0" layoutY="382.0" onAction="#onFilter" prefHeight="25.0"
 					  prefWidth="150.0"/>
 			<TextField fx:id="titleFilter" layoutX="3.0" layoutY="415.0" translateY="30.0"/>
-			<Line endX="76.0" layoutX="97.0" layoutY="34.0" startX="-100.0"/>
-			<ComboBox fx:id="watchStateEdit" layoutX="3.0" layoutY="60.0" prefWidth="150.0"/>
-			<ComboBox fx:id="ratingEdit" layoutX="97.0" layoutY="101.0" prefHeight="25.0" prefWidth="55.0"/>
-			<DatePicker fx:id="watchedEdit" layoutX="3.0" layoutY="137.0" prefHeight="25.0" prefWidth="151.0"/>
-			<ComboBox fx:id="episodeEdit" layoutX="3.0" layoutY="174.0" prefHeight="25.0" prefWidth="83.0"/>
-			<Label layoutX="50.0" layoutY="105.0" text="Rating"/>
-			<Label fx:id="selectedMediaTitle" layoutX="3.0" layoutY="38.0" maxWidth="150.0" text="Selected media"/>
-			<Line endX="76.0" layoutX="96.0" layoutY="228.0" startX="-100.0" translateY="30.0"/>
-			<Label layoutX="3.0" layoutY="232.0" text="Filter" translateY="30.0"/>
-			<Button layoutX="95.0" layoutY="214.0" mnemonicParsing="false" onAction="#decreaseWatched" prefHeight="25.0"
-					prefWidth="25.0" text="-"/>
-			<Button layoutX="129.0" layoutY="214.0" mnemonicParsing="false" onAction="#increaseWatched"
-					prefHeight="25.0" prefWidth="25.0" text="+"/>
-			<Label layoutX="30.0" layoutY="218.0" text="#Watched"/>
+
+			<!--Teaser-->
 			<JavaFxMediaTeaser fx:id="mediaTeaser" layoutY="550.0" prefHeight="200.0" prefWidth="250.0"/>
 			<CheckBox fx:id="playTeaser" layoutX="3.0" layoutY="500.0" mnemonicParsing="false" text="Play teaser"/>
-			<!--			TODO [lueko]: only show if new episodes are available-->
+
+			<!--New episodes available notice for external media-->
 			<Line fx:id="newEpisodesLine" visible="${newEpisodesAvailable}" endX="76.0" layoutX="97.0" layoutY="535.0"
 				  startX="-100.0"/>
 			<Text fx:id="newEpisodesText" visible="${newEpisodesAvailable}" layoutX="3.0" layoutY="550.0">New episodes

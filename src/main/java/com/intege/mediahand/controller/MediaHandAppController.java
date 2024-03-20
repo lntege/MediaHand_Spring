@@ -619,8 +619,10 @@ public class MediaHandAppController {
     }
 
     public void onPlayEnter(KeyEvent keyEvent) {
-        if (keyEvent.getCode() == KeyCode.ENTER) {
+        if (keyEvent.getCode() == KeyCode.ENTER && keyEvent.isControlDown()) {
             playMedia();
+        } else if (keyEvent.getCode() == KeyCode.ENTER) {
+            playEmbeddedMedia();
         }
     }
 
