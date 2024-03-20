@@ -175,9 +175,9 @@ public class MediaLoader {
 
     public static void updateMediaEntryEpisodes(final MediaEntry mediaEntry, final int episodeCount) {
         mediaEntry.setEpisodeNumber(episodeCount);
-        if (mediaEntry.getCurrentEpisode() > mediaEntry.getEpisodeNumber()) {
+        if (mediaEntry.getCurrentEpisodeNumber() > mediaEntry.getEpisodeNumber()) {
             MessageUtil.infoAlert("Update media entry",
-                    "Current episode is higher than the new episode number. Set current episode to new episode number: " + mediaEntry.getCurrentEpisode() + "/"
+                    "Current episode is higher than the new episode number. Set current episode to new episode number: " + mediaEntry.getCurrentEpisodeNumber() + "/"
                             + mediaEntry.getEpisodeNumber());
             mediaEntry.setCurrentEpisode(mediaEntry.getEpisodeNumber());
         }
@@ -190,7 +190,7 @@ public class MediaLoader {
         mediaEntry.setPath(newMediaEntry.getPath());
         mediaEntry.setEpisodeNumber(newMediaEntry.getEpisodeNumber());
         mediaEntry.setMediaType(newMediaEntry.getMediaType());
-        if (mediaEntry.getCurrentEpisode() > mediaEntry.getEpisodeNumber()) {
+        if (mediaEntry.getCurrentEpisodeNumber() > mediaEntry.getEpisodeNumber()) {
             mediaEntry.setCurrentEpisode(mediaEntry.getEpisodeNumber());
         }
         MediaHandAppController.triggerMediaEntryUpdate(mediaEntry);

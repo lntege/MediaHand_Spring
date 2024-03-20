@@ -158,6 +158,14 @@ public @Data class MediaEntry {
         this.available = new File(getAbsolutePath()).exists();
     }
 
+    public String getCurrentEpisode() {
+        return this.currentEpisode + "/" + this.episodeNumber;
+    }
+
+    public int getCurrentEpisodeNumber() {
+        return this.currentEpisode;
+    }
+
     public boolean isExternalMediaUrl() {
         return getMediaType().equals(MEDIATYPE_EXTERNAL);
     }

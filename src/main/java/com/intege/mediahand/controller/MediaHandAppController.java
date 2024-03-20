@@ -235,7 +235,7 @@ public class MediaHandAppController {
     private void addEpisodeEditListener() {
         this.episodeEdit.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             MediaEntry selectedItem = this.mediaTableView.getSelectionModel().getSelectedItem();
-            if (selectedItem != null && newValue != null && selectedItem.getCurrentEpisode() != newValue) {
+            if (selectedItem != null && newValue != null && selectedItem.getCurrentEpisodeNumber() != newValue) {
                 selectedItem.setCurrentEpisode(newValue);
                 this.mediaEntryRepository.save(selectedItem);
                 MediaHandAppController.triggerMediaEntryUpdate(selectedItem);
@@ -286,9 +286,9 @@ public class MediaHandAppController {
         this.playTeaser.selectedProperty().addListener((observable, oldValue, newValue) -> {
             MediaEntry mediaEntry = this.mediaTableView.getSelectionModel().getSelectedItem();
             if (mediaEntry != null && !mediaEntry.isExternalMediaUrl() && Files.exists(Path.of(
-                    mediaEntry.getAbsolutePath() + THUMBNAILS_FOLDER + mediaEntry.getCurrentEpisode() + THUMBNAIL_FILE_TYPE))) {
+                    mediaEntry.getAbsolutePath() + THUMBNAILS_FOLDER + mediaEntry.getCurrentEpisodeNumber() + THUMBNAIL_FILE_TYPE))) {
                 this.mediaTeaser.getThumbnailView().setImage(new Image(
-                        "file:" + mediaEntry.getAbsolutePath() + THUMBNAILS_FOLDER + mediaEntry.getCurrentEpisode() + THUMBNAIL_FILE_TYPE));
+                        "file:" + mediaEntry.getAbsolutePath() + THUMBNAILS_FOLDER + mediaEntry.getCurrentEpisodeNumber() + THUMBNAIL_FILE_TYPE));
                 this.mediaTeaser.switchImageView(false);
                 this.mediaTeaser.pause();
             }
@@ -349,12 +349,12 @@ public class MediaHandAppController {
                     this.episodeEdit.getSelectionModel().select(null);
                     this.episodeEdit.setItems(FXCollections.observableArrayList(episodes));
                 }
-                this.episodeEdit.getSelectionModel().select(newValue.getCurrentEpisode() - 1);
+                this.episodeEdit.getSelectionModel().select(newValue.getCurrentEpisodeNumber() - 1);
                 this.watchedEdit.setValue(newValue.getWatchedDate());
                 if (newValue.isAvailable() && !newValue.isExternalMediaUrl()) {
-                    if (Files.exists(Path.of(newValue.getAbsolutePath() + THUMBNAILS_FOLDER + newValue.getCurrentEpisode() + THUMBNAIL_FILE_TYPE))) {
+                    if (Files.exists(Path.of(newValue.getAbsolutePath() + THUMBNAILS_FOLDER + newValue.getCurrentEpisodeNumber() + THUMBNAIL_FILE_TYPE))) {
                         this.mediaTeaser.getThumbnailView().setImage(new Image(
-                                "file:" + newValue.getAbsolutePath() + THUMBNAILS_FOLDER + newValue.getCurrentEpisode() + THUMBNAIL_FILE_TYPE));
+                                "file:" + newValue.getAbsolutePath() + THUMBNAILS_FOLDER + newValue.getCurrentEpisodeNumber() + THUMBNAIL_FILE_TYPE));
                         this.mediaTeaser.switchImageView(false);
                         this.mediaTeaser.pause();
                     }
@@ -387,13 +387,13 @@ public class MediaHandAppController {
         }
         if (mediaEntry.isAvailable()) {
             if (!this.playTeaser.isSelected()) {
-                checkThumbnailForEpisode(mediaEntry.getCurrentEpisode(), mediaEntry);
+                checkThumbnailForEpisode(mediaEntry.getCurrentEpisodeNumber(), mediaEntry);
                 this.mediaTeaser.pause();
                 this.mediaTeaser.switchImageView(false);
             } else {
                 this.mediaTeaser.switchImageView(true);
                 try {
-                    if (this.mediaTeaser.start(MediaLoader.getEpisode(mediaEntry.getAbsolutePath(), mediaEntry.getCurrentEpisode()))) {
+                    if (this.mediaTeaser.start(MediaLoader.getEpisode(mediaEntry.getAbsolutePath(), mediaEntry.getCurrentEpisodeNumber()))) {
                         this.mediaTeaser.getEmbeddedMediaPlayer().audio().setTrack(-1);
                         if (!this.playTeaser.isSelected()) {
                             try {
@@ -408,11 +408,11 @@ public class MediaHandAppController {
                     this.mediaTeaser.pause();
                     this.mediaTeaser.switchImageView(false);
                 }
-                checkThumbnailForEpisode(mediaEntry.getCurrentEpisode(), mediaEntry);
+                checkThumbnailForEpisode(mediaEntry.getCurrentEpisodeNumber(), mediaEntry);
             }
             if (mediaEntry.equals(this.mediaTableView.getSelectionModel().getSelectedItem())) {
                 this.mediaTeaser.getThumbnailView().setImage(new Image(
-                        "file:" + mediaEntry.getAbsolutePath() + THUMBNAILS_FOLDER + mediaEntry.getCurrentEpisode() + THUMBNAIL_FILE_TYPE));
+                        "file:" + mediaEntry.getAbsolutePath() + THUMBNAILS_FOLDER + mediaEntry.getCurrentEpisodeNumber() + THUMBNAIL_FILE_TYPE));
             }
         }
     }
@@ -448,7 +448,7 @@ public class MediaHandAppController {
      * @return true, if given episode and media entry is selected
      */
     private boolean isCurrentSelection(final int episodeIndex, final MediaEntry mediaEntry) {
-        return mediaEntry.equals(this.mediaTableView.getSelectionModel().getSelectedItem()) && episodeIndex == mediaEntry.getCurrentEpisode();
+        return mediaEntry.equals(this.mediaTableView.getSelectionModel().getSelectedItem()) && episodeIndex == mediaEntry.getCurrentEpisodeNumber();
     }
 
     /**
@@ -675,7 +675,7 @@ public class MediaHandAppController {
                         started = this.javaFxMediaPlayer.start(hlsStream.get(LANG).getUrl());
                     }
                 } else {
-                    File file = MediaLoader.getEpisode(selectedItem.getAbsolutePath(), selectedItem.getCurrentEpisode());
+                    File file = MediaLoader.getEpisode(selectedItem.getAbsolutePath(), selectedItem.getCurrentEpisodeNumber());
                     started = this.javaFxMediaPlayer.start(file);
                 }
                 if (started) {
@@ -731,7 +731,7 @@ public class MediaHandAppController {
                 }
             } else {
                 try {
-                    file = MediaLoader.getEpisode(selectedItem.getAbsolutePath(), selectedItem.getCurrentEpisode());
+                    file = MediaLoader.getEpisode(selectedItem.getAbsolutePath(), selectedItem.getCurrentEpisodeNumber());
                 } catch (IOException e) {
                     MessageUtil.warningAlert(e);
                     changeMediaLocation();
@@ -770,7 +770,7 @@ public class MediaHandAppController {
         List<VoeFetcher.HlsUrl> hlsStreams = new ArrayList<>();
         String path = selectedItem.getPath();
         try {
-            int episodeIndex = selectedItem.getCurrentEpisode() - 1;
+            int episodeIndex = selectedItem.getCurrentEpisodeNumber() - 1;
             URL episodeUrl = SourceFetcherFactory.getAniworldFetcherInstance().extractEpisodes(new URL(path)).get(episodeIndex);
             List<URL> voeUrls = SourceFetcherFactory.getAniworldFetcherInstance().extractVoeUrl(episodeUrl);
             if (voeUrls.isEmpty()) {
@@ -803,8 +803,8 @@ public class MediaHandAppController {
 
     public void increaseCurrentEpisode() {
         MediaEntry selectedItem = this.mediaTableView.getSelectionModel().getSelectedItem();
-        if (selectedItem != null && selectedItem.getCurrentEpisode() < selectedItem.getEpisodeNumber()) {
-            selectedItem.setCurrentEpisode(selectedItem.getCurrentEpisode() + 1);
+        if (selectedItem != null && selectedItem.getCurrentEpisodeNumber() < selectedItem.getEpisodeNumber()) {
+            selectedItem.setCurrentEpisode(selectedItem.getCurrentEpisodeNumber() + 1);
             this.mediaEntryRepository.save(selectedItem);
             MediaHandAppController.triggerMediaEntryUpdate(selectedItem);
         }
@@ -812,8 +812,8 @@ public class MediaHandAppController {
 
     public void decreaseCurrentEpisode() {
         MediaEntry selectedItem = this.mediaTableView.getSelectionModel().getSelectedItem();
-        if (selectedItem != null && selectedItem.getCurrentEpisode() > 1) {
-            selectedItem.setCurrentEpisode(selectedItem.getCurrentEpisode() - 1);
+        if (selectedItem != null && selectedItem.getCurrentEpisodeNumber() > 1) {
+            selectedItem.setCurrentEpisode(selectedItem.getCurrentEpisodeNumber() - 1);
             this.mediaEntryRepository.save(selectedItem);
             MediaHandAppController.triggerMediaEntryUpdate(selectedItem);
         }
