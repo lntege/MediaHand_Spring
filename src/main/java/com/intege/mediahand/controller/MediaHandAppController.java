@@ -81,7 +81,7 @@ public class MediaHandAppController {
 
     public static final String THUMBNAILS_FOLDER = "\\thumbnails\\";
 
-    public static final int LANG = 1;
+    public static final int LANG = 1; // German
 
     @FXML
     public TableView<MediaEntry> mediaTableView;
@@ -671,10 +671,10 @@ public class MediaHandAppController {
                 boolean started = false;
                 long duration = 0;
                 if (selectedItem.isExternalMediaUrl()) {
-                    List<VoeFetcher.HlsUrl> hlsStream = getHlsStreamOfCurrentEpisode(selectedItem);
-                    if (!hlsStream.isEmpty()) {
-                        duration = hlsStream.get(LANG).getDuration();
-                        started = this.javaFxMediaPlayer.start(hlsStream.get(LANG).getUrl());
+                    List<VoeFetcher.HlsUrl> hlsStreams = getHlsStreamOfCurrentEpisode(selectedItem);
+                    if (!hlsStreams.isEmpty()) {
+                        duration = getGermanOrFirstEntry(hlsStreams).getDuration();
+                        started = this.javaFxMediaPlayer.start(getGermanOrFirstEntry(hlsStreams).getUrl());
                     }
                 } else {
                     File file = MediaLoader.getEpisode(selectedItem.getAbsolutePath(), selectedItem.getCurrentEpisodeNumber());
@@ -744,7 +744,7 @@ public class MediaHandAppController {
                 Desktop desktop = Desktop.getDesktop();
                 try {
                     if (!hlsStreams.isEmpty()) {
-                        desktop.browse(URI.create(hlsStreams.get(LANG).getUrl()));
+                        desktop.browse(URI.create(getGermanOrFirstEntry(hlsStreams).getUrl()));
                     }
                     desktop.open(file);
                     this.mediaTeaser.pause();
@@ -755,7 +755,7 @@ public class MediaHandAppController {
             } else {
                 try {
                     if (!hlsStreams.isEmpty()) {
-                        Runtime.getRuntime().exec(new String[]{"vlc ", hlsStreams.get(LANG).getUrl()});
+                        Runtime.getRuntime().exec(new String[]{"vlc ", getGermanOrFirstEntry(hlsStreams).getUrl()});
                     } else if (file != null) {
                         Runtime.getRuntime().exec(new String[]{"rundll32", "url.dll,FileProtocolHandler", file.getAbsolutePath()});
                     }
@@ -897,5 +897,12 @@ public class MediaHandAppController {
                 System.out.println(e.getMessage());
             }
         }
+    }
+
+    private VoeFetcher.HlsUrl getGermanOrFirstEntry(List<VoeFetcher.HlsUrl> list) {
+        if (list.size() <= LANG) {
+            return list.get(0);
+        }
+        return list.get(LANG);
     }
 }
